@@ -7,5 +7,8 @@ PROJECT_TYPE
 # Generated scanner evidence is retained by CI artifacts, not committed.
 results/raw/
 
-# Operator-provided project brief; kept local rather than publishing it with the demo.
-[NCUD-GPAI] VinUni x VinSOC 6-week of Project Sentinnel-1.pdf
+# Operator-provided project briefs are kept local rather than published with the demo.
+*.pdf
+
+# Active flow session state is local-only.
+flow/.lock
