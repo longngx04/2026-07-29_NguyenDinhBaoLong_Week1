@@ -1,0 +1,14 @@
+name: sentinel-sec
+
+services:
+  webgoat:
+    image: webgoat/webgoat:v2025.3
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:9090:9090"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8080/WebGoat/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 20s

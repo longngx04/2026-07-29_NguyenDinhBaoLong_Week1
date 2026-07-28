@@ -1,0 +1,11 @@
+
+# /flow run-state (generated; safe to ignore)
+MODE
+PROJECT_TYPE
+.flow/
+
+# Generated scanner evidence is retained by CI artifacts, not committed.
+results/raw/
+
+# Operator-provided project brief; kept local rather than publishing it with the demo.
+[NCUD-GPAI] VinUni x VinSOC 6-week of Project Sentinnel-1.pdf
