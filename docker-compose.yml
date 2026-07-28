@@ -1,6 +1,18 @@
 name: sentinel-sec
 
 services:
+  scanner:
+    build:
+      context: ./scanner
+    image: sentinel-sec/scanner:local
+    working_dir: /workspace
+    entrypoint: []
+    profiles: ["scanner"]
+    volumes:
+      - ./targets/webgoat:/workspace/targets/webgoat:ro
+      - ./rules/opengrep:/workspace/rules/opengrep:ro
+      - ./results:/workspace/results
+
   webgoat:
     image: webgoat/webgoat:v2025.3
     ports:
