@@ -35,7 +35,20 @@ jobs:
           sarif_file: results/sarif/opengrep.sarif
           category: opengrep
 
-      - name: Upload raw scan artifacts
+      - name: Normalize findings
+        run: make normalize
+
+      - name: Validate normalized findings
+        run: |
+          jq -e 'type == "array" and length >= 1 and all(.[]; .tool == "opengrep" and (.severity | type == "string"))' results/normalized/findings.json
+          test -s results/normalized/findings.jsonl
+
+      - name: Smoke-test knowledge search
+        run: |
+          make search Q='SQL Injection'
+          make search Q='XSS'
+
+      - name: Upload scan artifacts
         uses: actions/upload-artifact@v4
         with:
           name: scan-reports
@@ -43,3 +56,5 @@ jobs:
           path: |
             results/raw/opengrep.json
             results/sarif/opengrep.sarif
+            results/normalized/findings.json
+            results/normalized/findings.jsonl

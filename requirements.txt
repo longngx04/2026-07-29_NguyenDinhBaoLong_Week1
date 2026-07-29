@@ -1,0 +1,1 @@
+# Week-2 uses the Python standard library only (no third-party packages required).
