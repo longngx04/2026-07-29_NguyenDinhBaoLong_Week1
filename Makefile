@@ -1,7 +1,7 @@
 SHELL := /usr/bin/env bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: target-up target-down scan-opengrep
+.PHONY: target-up target-down scan-opengrep scan-findsecbugs
 
 target-up:
 	@docker compose up --detach webgoat
@@ -21,3 +21,6 @@ target-down:
 
 scan-opengrep:
 	@./scripts/scan-opengrep.sh
+
+scan-findsecbugs:
+	@./scripts/scan-findsecbugs.sh
