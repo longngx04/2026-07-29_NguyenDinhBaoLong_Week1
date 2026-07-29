@@ -15,3 +15,10 @@ scanner/opengrep
 
 # Operator-provided project briefs are kept local rather than published with the demo.
 *.pdf
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Generated SARIF for GitHub Security tab (rebuilt by CI)
+results/sarif/
