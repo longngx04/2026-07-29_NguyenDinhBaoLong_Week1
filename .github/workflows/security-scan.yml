@@ -18,9 +18,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Build scanner image
-        run: docker compose build scanner
-
       - name: Run static scan
         run: make scan
 
