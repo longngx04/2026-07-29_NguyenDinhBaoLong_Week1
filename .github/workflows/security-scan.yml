@@ -1,4 +1,4 @@
-name: Week-1 security scan
+name: Security scan
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  security-events: write  # required for upload-sarif
 
 jobs:
   scan:
@@ -25,9 +26,20 @@ jobs:
         run: |
           jq -e 'type == "object" and (.results | type == "array") and (.errors | type == "array")' results/raw/opengrep.json
 
-      - name: Upload Week-1 raw scan report
+      - name: Convert to SARIF
+        run: python3 scripts/to-sarif.py
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results/sarif/opengrep.sarif
+          category: opengrep
+
+      - name: Upload raw scan artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: week1-raw-scan-reports
+          name: scan-reports
           if-no-files-found: error
-          path: results/raw/opengrep.json
+          path: |
+            results/raw/opengrep.json
+            results/sarif/opengrep.sarif
