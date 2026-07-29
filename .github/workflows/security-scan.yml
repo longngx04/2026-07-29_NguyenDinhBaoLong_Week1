@@ -1,0 +1,36 @@
+name: Week-1 security scan
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository and WebGoat submodule
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build scanner image
+        run: docker compose build scanner
+
+      - name: Run static scan
+        run: make scan
+
+      - name: Validate raw report format
+        run: |
+          jq -e 'type == "object" and (.results | type == "array") and (.errors | type == "array")' results/raw/opengrep.json
+
+      - name: Upload Week-1 raw scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: week1-raw-scan-reports
+          if-no-files-found: error
+          path: results/raw/opengrep.json

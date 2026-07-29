@@ -1,14 +1,17 @@
-
 # /flow run-state (generated; safe to ignore)
 MODE
 PROJECT_TYPE
 .flow/
 
-# Generated scanner evidence is retained by CI artifacts, not committed.
-results/raw/
+# Internal buildflow / planning artifacts — not part of Week-1 mentor handoff.
+flow/
+cards/
+docs/ground-truth.md
+DESIGN.md
+RETRO.md
+
+# OpenGrep binary is downloaded by scripts/scan-opengrep.sh before image build.
+scanner/opengrep
 
 # Operator-provided project briefs are kept local rather than published with the demo.
 *.pdf
-
-# Active flow session state is local-only.
-flow/.lock
