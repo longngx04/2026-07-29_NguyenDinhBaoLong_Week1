@@ -25,9 +25,25 @@ jobs:
         run: |
           jq -e 'type == "object" and (.results | type == "array") and (.errors | type == "array")' results/raw/opengrep.json
 
-      - name: Upload Week-1 raw scan report
+      - name: Normalize findings
+        run: make normalize
+
+      - name: Validate normalized findings
+        run: |
+          jq -e 'type == "array" and length >= 1 and all(.[]; .tool == "opengrep" and (.severity | type == "string"))' results/normalized/findings.json
+          test -s results/normalized/findings.jsonl
+
+      - name: Smoke-test knowledge search
+        run: |
+          make search Q='SQL Injection'
+          make search Q='XSS'
+
+      - name: Upload scan reports
         uses: actions/upload-artifact@v4
         with:
           name: week1-raw-scan-reports
           if-no-files-found: error
-          path: results/raw/opengrep.json
+          path: |
+            results/raw/opengrep.json
+            results/normalized/findings.json
+            results/normalized/findings.jsonl
