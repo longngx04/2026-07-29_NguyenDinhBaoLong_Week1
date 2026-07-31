@@ -15,3 +15,10 @@ scanner/opengrep
 
 # Operator-provided project briefs are kept local rather than published with the demo.
 *.pdf
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Local raw scan output (regenerate with make scan). Normalized findings are committed.
+results/raw/

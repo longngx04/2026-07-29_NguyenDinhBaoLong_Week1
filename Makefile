@@ -1,7 +1,7 @@
 SHELL := /usr/bin/env bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: target-up target-down scan scan-opengrep
+.PHONY: target-up target-down scan scan-opengrep normalize search
 
 target-up:
 	@docker compose up --detach webgoat
@@ -23,3 +23,10 @@ scan: scan-opengrep
 
 scan-opengrep:
 	@./scripts/scan-opengrep.sh
+
+normalize:
+	@python3 -m week2.normalize
+
+search:
+	@test -n "$(Q)" || (printf '%s\n' 'Usage: make search Q='\''SQL Injection'\''' >&2; exit 1)
+	@python3 -m week2.search $(Q)

@@ -1,14 +1,14 @@
-# Project Sentinel — Week 1
+# Project Sentinel — Week 1 & Week 2
 
 Project Sentinel chạy OpenGrep để quét bảo mật tĩnh trên [OWASP WebGoat](https://owasp.org/www-project-webgoat/) — ứng dụng cố ý có lỗ hổng để học và demo.
 
-OpenGrep quét mã nguồn Java với bộ rule trong `rules/opengrep/`, xuất JSON gốc.
+OpenGrep quét mã nguồn Java với bộ rule trong `rules/opengrep/`, xuất JSON gốc. Week-2 chuẩn hóa finding sang schema chung và tìm kiếm kho tri thức Markdown.
 
 Target chỉ mở trên loopback (`127.0.0.1`), nên chỉ truy cập được từ máy đang chạy.
 
-## Bắt đầu nhanh
+## Bắt đầu nhanh (Week-1 scan)
 
-Cần có: Docker Engine kèm Docker Compose v2, `curl`, và `jq`. Nếu lấy code bằng Git, khởi tạo submodule WebGoat trước. Bản ZIP handoff đã có sẵn `targets/webgoat/`, nên bước này không cần sau khi giải nén.
+Cần có: Docker Engine kèm Docker Compose v2, `curl`, `jq`, và Python 3. Nếu lấy code bằng Git, khởi tạo submodule WebGoat trước. Bản ZIP handoff đã có sẵn `targets/webgoat/`, nên bước này không cần sau khi giải nén.
 
 ```bash
 # Chỉ cần khi clone bằng Git:
@@ -21,6 +21,19 @@ make target-down
 
 Kết quả quét nằm ở `results/raw/opengrep.json`.
 
-Workflow CI tại `.github/workflows/security-scan.yml` chạy cùng lệnh và upload báo cáo gốc thành artifact `week1-raw-scan-reports`.
+## Week-2 — normalize & search
 
-Xem thêm [ghi chú handoff Week-1](docs/week1.md) để biết kiến trúc, endpoint dùng cho demo, kết quả quét, và các giới hạn hiện tại.
+```bash
+# Cần results/raw/opengrep.json (chạy make scan nếu chưa có)
+make normalize
+make search Q='SQL Injection'
+make search Q='XSS'
+```
+
+- Finding chuẩn hóa: `results/normalized/findings.json`
+- Kho tri thức: `knowledge/`
+- Package: `week2/` (`python3 -m week2.normalize`, `python3 -m week2.search "..."`)
+
+Workflow CI tại `.github/workflows/security-scan.yml` chạy cùng lệnh scan và upload báo cáo gốc thành artifact `week1-raw-scan-reports`.
+
+Xem thêm [Week-1](docs/week1.md) và [Week-2](docs/week2.md).
