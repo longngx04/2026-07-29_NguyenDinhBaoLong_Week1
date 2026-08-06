@@ -6,6 +6,34 @@
 
 ---
 
+## CURRENT TASK FOR ANTIGRAVITY (execute next)
+
+**Priority:** Implement OpenRouter direct-call path for real analysis runs.
+
+**Authoritative design:** [`docs/superpowers/specs/2026-08-06-openrouter-direct-analysis-design.md`](../docs/superpowers/specs/2026-08-06-openrouter-direct-analysis-design.md)
+
+**Authoritative step plan:** [`docs/superpowers/plans/2026-08-06-openrouter-direct-analysis.md`](../docs/superpowers/plans/2026-08-06-openrouter-direct-analysis.md)
+
+**Do this now (Phase 3 override):**
+
+1. Update `week3/config.py` for OpenRouter env defaults (`LLM_PROVIDER=openrouter`, `LLM_BASE_URL=https://openrouter.ai/api/v1`, `LLM_MODEL=deepseek/deepseek-v4-flash-0731`, prefer `LLM_TIMEOUT_SECONDS`).
+2. Implement `week3/llm/openrouter.py` as a **direct HTTPS** Chat Completions caller (stdlib only; no OpenAI SDK / LangChain).
+3. Keep `FakeLLM` for tests/CI; never call OpenRouter from tests.
+4. Add `.env.example` + ensure `.env` is gitignored; update README run instructions.
+5. Add mocked HTTP unit tests (no network).
+6. Do **not** invent a silent FakeLLM fallback when OpenRouter fails.
+
+**Verify before Round 2 handoff:**
+
+```bash
+python3 -m pytest -q tests/week3
+python3 -m compileall -q week3
+make normalize
+make search Q='SQL Injection'
+```
+
+---
+
 ## 1. Kết quả cần đạt cuối tuần
 
 | Deliverable | Path đề xuất | Acceptance evidence |
@@ -227,33 +255,60 @@ Rules:
 - Không truyền secret.
 - Có prompt hash cho run summary.
 
-#### 3.3 Provider interface
+#### 3.3 Real LLM path — OpenRouter direct HTTP (approved override)
+
+**Không** implement generic `openai_compatible` adapter làm primary path.
+**Có** gọi OpenRouter trực tiếp từ Week 3 analysis path.
 
 ```python
-class LLMProvider(Protocol):
-    def analyze(self, packet: AnalysisPacket) -> LLMResult: ...
+# week3/llm/openrouter.py — conceptual surface
+def call_openrouter(
+    *,
+    packet: AnalysisPacket,
+    system_prompt: str,
+    api_key: str,
+    base_url: str,
+    model: str,
+    timeout_seconds: float,
+) -> LLMResult: ...
 ```
 
-`LLMResult` nên chứa:
+Contract (must match design doc):
 
-- parsed/raw response
-- model name
-- request ID nếu có
-- prompt/completion tokens nếu có
-- latency
+| Item | Value |
+|---|---|
+| Endpoint | `POST {LLM_BASE_URL}/chat/completions` |
+| Default base URL | `https://openrouter.ai/api/v1` |
+| Default model | `deepseek/deepseek-v4-flash-0731` |
+| Auth | `Authorization: Bearer <LLM_API_KEY>` |
+| Body | `model`, `messages` (system + user JSON packet), `temperature=0`, `response_format={"type":"json_object"}` |
+| Transport | Python stdlib HTTPS only |
+| Missing API key | Config error **before** any network call |
+| Retry | At most 1 for timeout / transport / 429 / 5xx / malformed JSON |
+| Non-retry | Other 4xx |
+| Secrets in logs | Forbidden (key, Authorization, full prompt) |
+| FakeLLM | Retained for `--provider fake` / tests / CI only |
 
-Adapter đầu tiên có thể là OpenAI-compatible; base URL/model/API key từ env. Không hard-code model.
+Pipeline selection:
+
+- `LLM_PROVIDER=openrouter` → direct OpenRouter call
+- `LLM_PROVIDER=fake` or CLI `--provider fake` → `FakeLLM`
+- Never silently swap OpenRouter failure to FakeLLM
+
+`LLMResult` vẫn chứa: parsed/raw response, model name, request ID nếu có, prompt/completion tokens nếu có, latency.
 
 #### 3.4 Retry policy
 
 Retry **chỉ** khi:
 
-- transient timeout/5xx
-- malformed structured output
+- transient timeout / DNS / TLS / connection reset
+- HTTP 429 or 5xx
+- malformed structured output / empty choice content
 
 Không retry vô hạn. Default max retry = 1.
+Other HTTP 4xx: fail immediately with status only (no body/secret dump).
 
-**Exit criteria:** FakeLLM pipeline pass; real adapter có smoke test thủ công, không chạy trong CI.
+**Exit criteria:** FakeLLM pipeline pass offline; OpenRouter path covered by mocked HTTP tests; real smoke test thủ công local only, không chạy trong CI.
 
 ---
 

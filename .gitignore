@@ -16,9 +16,17 @@ scanner/opengrep
 # Operator-provided project briefs are kept local rather than published with the demo.
 *.pdf
 
+# Local secrets (copy from .env.example; never commit)
+.env
+
+# Python virtual environment and egg info
+.venv/
+*.egg-info/
+
 # Python bytecode
 __pycache__/
 *.py[cod]
+
 
 # Local raw scan output (regenerate with make scan). Normalized findings are committed.
 results/raw/

@@ -156,7 +156,7 @@ Không triển khai một autonomous agent loop. “Agent” ở Week 3 là mộ
 | Local keyword retrieval | Reuse Week 2, đủ cho dataset nhỏ, không thêm service mới |
 | Source snippet read-only | Cung cấp evidence thật thay vì yêu cầu model suy diễn từ rule message |
 | Post-validation | System Prompt không đủ để đảm bảo correctness; output phải được code kiểm tra |
-| Provider adapter | Không hard-code model/provider; dễ dùng OpenAI-compatible endpoint hoặc mock |
+| OpenRouter direct HTTP + FakeLLM | Runtime gọi OpenRouter stdlib HTTPS; CI/test dùng FakeLLM; không SDK orchestration |
 | Mock LLM trong test/CI | Không lưu secret, không phụ thuộc network, test reproducible |
 
 ## 6. Nguyên tắc grouping
@@ -345,24 +345,29 @@ System Prompt phải enforce các rule sau:
 
 ## 11. Provider/config contract
 
-Không có model/provider bắt buộc trong repository hiện tại. Implementation phải dùng environment variables:
+Real runtime gọi **OpenRouter trực tiếp** qua HTTPS Chat Completions (stdlib), không thêm OpenAI SDK / LangChain. Tests/CI vẫn dùng `FakeLLM`.
+
+Design chi tiết: [`docs/superpowers/specs/2026-08-06-openrouter-direct-analysis-design.md`](../docs/superpowers/specs/2026-08-06-openrouter-direct-analysis-design.md)
 
 ```dotenv
-LLM_PROVIDER=openai_compatible
-LLM_BASE_URL=
+LLM_PROVIDER=openrouter
+LLM_BASE_URL=https://openrouter.ai/api/v1
 LLM_API_KEY=
-LLM_MODEL=
+LLM_MODEL=deepseek/deepseek-v4-flash-0731
 LLM_TIMEOUT_SECONDS=60
 LLM_MAX_RETRIES=1
 ```
 
 Quy tắc:
 
-- Không commit `.env` hoặc API key.
-- Có `.env.example` không chứa secret.
-- Tests dùng `FakeLLM`, không gọi network.
+- Khi `LLM_PROVIDER=openrouter`: thiếu `LLM_API_KEY` → fail config trước mọi network call.
+- Endpoint cố định: `POST {LLM_BASE_URL}/chat/completions` (default `https://openrouter.ai/api/v1/chat/completions`).
+- Model default: `deepseek/deepseek-v4-flash-0731`.
+- Không commit `.env` hoặc API key; có `.env.example` không chứa secret.
+- Tests dùng `FakeLLM`, không gọi network; CI không gọi OpenRouter.
 - Runtime chỉ gọi đúng configured LLM endpoint; không có web browsing/tool execution.
-- Log không ghi prompt đầy đủ nếu prompt có source code nhạy cảm; chỉ ghi hash/count/metrics khi đủ.
+- Log không ghi API key, Authorization header, prompt đầy đủ, hoặc source snippets; chỉ ghi hash/count/metrics khi đủ.
+- Không fallback silent từ OpenRouter fail sang FakeLLM.
 
 ## 12. Error-handling contract
 
@@ -426,7 +431,7 @@ week3/
   llm/
     __init__.py
     base.py
-    openai_compatible.py
+    openrouter.py
     fake.py
 
 prompts/
