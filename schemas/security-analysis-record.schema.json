@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SecurityAnalysisRecord",
+  "description": "Schema for a single analyzed finding group record in Project Sentinel (Week 3)",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "analysis_id",
+    "group_key",
+    "source_finding_ids",
+    "title",
+    "severity",
+    "scanner_severities",
+    "confidence",
+    "confidence_rationale",
+    "locations",
+    "cwe",
+    "owasp",
+    "evidence",
+    "explanation",
+    "preconditions",
+    "verification_steps",
+    "remediation",
+    "knowledge_refs",
+    "limitations"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "analysis_id": {
+      "type": "string",
+      "pattern": "^analysis-[a-f0-9-]+$"
+    },
+    "group_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_finding_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "info"]
+    },
+    "scanner_severities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "confidence_rationale": {
+      "type": "string"
+    },
+    "locations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "line"],
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "cwe": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "owasp": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["scanner", "source"]
+          },
+          "finding_id": {
+            "type": ["string", "null"]
+          },
+          "content": {
+            "type": "string"
+          },
+          "path": {
+            "type": ["string", "null"]
+          },
+          "start_line": {
+            "type": ["integer", "null"]
+          },
+          "end_line": {
+            "type": ["integer", "null"]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "explanation": {
+      "type": "string"
+    },
+    "preconditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "verification_steps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "remediation": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "knowledge_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "score"],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
