@@ -33,7 +33,8 @@ def retrieve_knowledge(
     cwe: Optional[List[str]] = None,
     owasp: Optional[List[str]] = None,
     knowledge_dir: Path = Path("knowledge"),
-    top_k: int = 3
+    top_k: int = 3,
+    max_snippet_chars: int = 700
 ) -> List[RetrievalHit]:
     """Retrieve relevant knowledge hits for a finding group using week2.search keyword engine.
     
@@ -66,12 +67,13 @@ def retrieve_knowledge(
     hits: List[RetrievalHit] = []
     for score, doc, snippet in raw_hits:
         rel_path = doc.path.as_posix()
+        clean_snippet = snippet if len(snippet) <= max_snippet_chars else snippet[:max_snippet_chars] + "..."
         hits.append(
             RetrievalHit(
                 path=rel_path,
                 title=doc.title,
                 score=score,
-                snippet=snippet
+                snippet=clean_snippet
             )
         )
 

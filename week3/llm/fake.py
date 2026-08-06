@@ -15,25 +15,31 @@ class FakeLLM(LLMProvider):
         self,
         custom_response: Optional[Dict[str, Any]] = None,
         should_fail_first: bool = False,
-        inject_invalid_provenance: bool = False
+        inject_invalid_provenance: bool = False,
+        max_retries: int = 0
     ):
         self.custom_response = custom_response
         self.should_fail_first = should_fail_first
         self.inject_invalid_provenance = inject_invalid_provenance
+        self.max_retries = max_retries
         self.call_count = 0
 
-    def analyze(self, packet: AnalysisPacket) -> LLMResult:
+    def analyze(self, packet: AnalysisPacket, system_prompt: Optional[str] = None) -> LLMResult:
         self.call_count += 1
         start_time = time.time()
 
         if self.should_fail_first and self.call_count == 1:
-            return LLMResult(
-                raw_response="Invalid JSON response string",
-                parsed_response=None,
-                model_name="fake-llm",
-                latency_ms=(time.time() - start_time) * 1000,
-                error="Malformed output JSON"
-            )
+            if self.max_retries >= 1:
+                # Internal provider retry succeeds on second attempt
+                self.call_count += 1
+            else:
+                return LLMResult(
+                    raw_response="Invalid JSON response string",
+                    parsed_response=None,
+                    model_name="fake-llm",
+                    latency_ms=(time.time() - start_time) * 1000,
+                    error="Malformed output JSON"
+                )
 
         if self.custom_response:
             parsed = dict(self.custom_response)

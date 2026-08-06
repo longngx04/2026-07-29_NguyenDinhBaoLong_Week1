@@ -58,3 +58,21 @@ def test_build_analysis_packet(tmp_path):
     assert "execute()" in packet.source_evidence[0]["content"]
     assert len(packet.knowledge_hits) > 0
     assert packet.output_schema.get("title") == "SecurityAnalysisRecord"
+
+
+def test_build_analysis_packet_with_limitations(tmp_path):
+    f = NormalizedFinding(
+        id="f-missing",
+        rule_id="java-sql-injection",
+        title="Missing file test",
+        severity="medium",
+        confidence="LOW",
+        location=NormalizedLocation(file="missing.java", line=1)
+    )
+    groups = group_findings([f])
+    config = AppConfig(project_root=tmp_path)
+    packet = build_analysis_packet(groups[0], config)
+
+    assert "input_limitations" in packet.finding_group
+    assert len(packet.finding_group["input_limitations"]) == 1
+    assert "missing.java" in packet.finding_group["input_limitations"][0]

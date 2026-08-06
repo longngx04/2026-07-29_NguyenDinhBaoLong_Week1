@@ -51,6 +51,9 @@ def build_analysis_packet(
             if item:
                 source_evidence_dicts.append(item.to_dict())
 
+    if limitations:
+        finding_group_dict["input_limitations"] = limitations
+
     # Retrieve knowledge hits
     hits = retrieve_knowledge(
         title=group.title,
@@ -58,7 +61,8 @@ def build_analysis_packet(
         cwe=group.cwe,
         owasp=group.owasp,
         knowledge_dir=config.knowledge_dir,
-        top_k=config.top_k_knowledge
+        top_k=config.top_k_knowledge,
+        max_snippet_chars=config.max_snippet_chars
     )
     knowledge_hits_dicts = [h.to_dict() for h in hits]
 

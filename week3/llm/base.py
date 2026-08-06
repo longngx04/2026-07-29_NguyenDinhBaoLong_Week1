@@ -36,6 +36,6 @@ class LLMResult:
 class LLMProvider(Protocol):
     """Protocol defining the LLM Provider interface contract."""
     
-    def analyze(self, packet: AnalysisPacket) -> LLMResult:
+    def analyze(self, packet: AnalysisPacket, system_prompt: Optional[str] = None) -> LLMResult:
         """Analyze a finding group packet and return an LLMResult."""
         ...
