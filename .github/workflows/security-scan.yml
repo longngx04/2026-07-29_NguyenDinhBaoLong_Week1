@@ -1,4 +1,4 @@
-name: Week-1 security scan
+name: Week-3 security scan & agent test
 
 on:
   push:
@@ -18,12 +18,31 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+
       - name: Run static scan
         run: make scan
 
       - name: Validate raw report format
         run: |
           jq -e 'type == "object" and (.results | type == "array") and (.errors | type == "array")' results/raw/opengrep.json
+
+      - name: Run offline agent tests
+        run: make agent-test
+
+      - name: Run mock analysis pipeline
+        run: make analyze-mock
+
+      - name: Validate analysis output JSONL schema
+        run: make validate-analysis
 
       - name: Upload Week-1 raw scan report
         uses: actions/upload-artifact@v4

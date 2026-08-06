@@ -92,7 +92,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     try:
         summary = run_pipeline(config)
     except FileNotFoundError as e:
-        print(f"Error: Input file not found: {e}", file=sys.stderr)
+        print(f"Error: {e}", file=sys.stderr)
         return 2
     except (ValueError, json.JSONDecodeError) as e:
         print(f"Error: Invalid input data format: {e}", file=sys.stderr)

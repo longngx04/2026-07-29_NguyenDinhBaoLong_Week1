@@ -1,4 +1,5 @@
 from pathlib import Path
+import week3.analyzer
 from week3.cli import main
 from week3.llm.fake import FakeLLM
 
@@ -28,13 +29,45 @@ def test_cli_exit_code_2_nonexistent_input():
     assert exit_code == 2
 
 
+def test_cli_exit_code_2_invalid_findings(tmp_path):
+    invalid_file = tmp_path / "invalid-findings.json"
+    invalid_file.write_text("{malformed json}", encoding="utf-8")
+    output_jsonl = tmp_path / "output.jsonl"
+    summary_file = tmp_path / "summary.json"
+
+    argv = [
+        "analyze",
+        "--input", str(invalid_file),
+        "--output", str(output_jsonl),
+        "--summary", str(summary_file),
+        "--provider", "fake"
+    ]
+    exit_code = main(argv)
+    assert exit_code == 2
+    assert not output_jsonl.exists()
+
+
+def test_cli_exit_code_3_openrouter_missing_key(monkeypatch, tmp_path):
+    input_file = Path(__file__).parent.parent.parent / "fixtures" / "week3" / "valid-findings.json"
+    monkeypatch.setenv("LLM_PROVIDER", "openrouter")
+    monkeypatch.setenv("LLM_API_KEY", "")
+
+    argv = [
+        "analyze",
+        "--input", str(input_file),
+        "--output", str(tmp_path / "out.jsonl"),
+        "--summary", str(tmp_path / "sum.json")
+    ]
+    exit_code = main(argv)
+    assert exit_code == 3
+
+
 def test_cli_exit_code_4_all_invalid_output(tmp_path):
     input_file = Path(__file__).parent.parent.parent / "fixtures" / "week3" / "valid-findings.json"
     output_jsonl = tmp_path / "output.jsonl"
     summary_file = tmp_path / "summary.json"
 
     fake_invalid = FakeLLM(inject_invalid_provenance=True)
-    import week3.pipeline
     original_build_llm = week3.pipeline.build_llm
     week3.pipeline.build_llm = lambda cfg: fake_invalid
 
@@ -77,14 +110,26 @@ def test_cli_target_root_wiring(tmp_path):
     target_root = tmp_path / "custom_target_root"
     target_root.mkdir()
 
-    argv = [
-        "analyze",
-        "--input", str(input_file),
-        "--output", str(output_jsonl),
-        "--summary", str(summary_file),
-        "--provider", "fake",
-        "--target-root", str(target_root)
-    ]
+    captured_target_roots = []
+    original_build_packet = week3.analyzer.build_analysis_packet
 
-    exit_code = main(argv)
-    assert exit_code == 0
+    def spy_build_packet(group, config, target_root=None):
+        captured_target_roots.append(target_root or config.target_root)
+        return original_build_packet(group, config, target_root=target_root)
+
+    week3.analyzer.build_analysis_packet = spy_build_packet
+    try:
+        argv = [
+            "analyze",
+            "--input", str(input_file),
+            "--output", str(output_jsonl),
+            "--summary", str(summary_file),
+            "--provider", "fake",
+            "--target-root", str(target_root)
+        ]
+        exit_code = main(argv)
+        assert exit_code == 0
+        assert len(captured_target_roots) > 0
+        assert captured_target_roots[0] == target_root
+    finally:
+        week3.analyzer.build_analysis_packet = original_build_packet

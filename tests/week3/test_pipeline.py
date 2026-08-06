@@ -4,7 +4,7 @@ from week3.config import AppConfig
 from week3.llm.base import AnalysisPacket, LLMResult
 from week3.llm.fake import FakeLLM
 from week3.pipeline import run_pipeline
-from week3.validators import read_jsonl
+from week3.validators import read_jsonl, validate_record_schema
 
 
 def test_pipeline_valid_findings_fake_llm(tmp_path):
@@ -39,6 +39,77 @@ def test_pipeline_valid_findings_fake_llm(tmp_path):
     assert summary_file.exists()
     summary_data = json.loads(summary_file.read_text(encoding="utf-8"))
     assert summary_data["output_record_count"] == 2
+
+
+def test_pipeline_empty_input(tmp_path):
+    input_file = Path(__file__).parent.parent.parent / "fixtures" / "week3" / "empty-findings.json"
+    output_jsonl = tmp_path / "security-analysis.jsonl"
+    summary_file = tmp_path / "run-summary.json"
+
+    config = AppConfig(
+        project_root=tmp_path,
+        input_findings_path=input_file,
+        output_jsonl_path=output_jsonl,
+        summary_path=summary_file,
+        provider_type="fake",
+        knowledge_dir=Path(__file__).parent.parent.parent / "knowledge",
+        schema_path=Path(__file__).parent.parent.parent / "schemas" / "security-analysis-record.schema.json"
+    )
+
+    summary = run_pipeline(config)
+
+    assert summary["input_finding_count"] == 0
+    assert summary["group_count"] == 0
+    assert summary["output_record_count"] == 0
+    assert summary["llm_call_count"] == 0
+    assert summary["retry_count"] == 0
+    assert summary["invalid_output_count"] == 0
+
+    assert output_jsonl.exists()
+    records = read_jsonl(output_jsonl)
+    assert len(records) == 0
+
+    assert summary_file.exists()
+    summary_data = json.loads(summary_file.read_text(encoding="utf-8"))
+    assert summary_data["output_record_count"] == 0
+
+
+def test_pipeline_duplicate_grouping_e2e(tmp_path):
+    input_file = Path(__file__).parent.parent.parent / "fixtures" / "week3" / "duplicate-findings.json"
+    output_jsonl = tmp_path / "security-analysis.jsonl"
+    summary_file = tmp_path / "run-summary.json"
+    schema_file = Path(__file__).parent.parent.parent / "schemas" / "security-analysis-record.schema.json"
+
+    config = AppConfig(
+        project_root=tmp_path,
+        input_findings_path=input_file,
+        output_jsonl_path=output_jsonl,
+        summary_path=summary_file,
+        provider_type="fake",
+        knowledge_dir=Path(__file__).parent.parent.parent / "knowledge",
+        schema_path=schema_file
+    )
+
+    summary = run_pipeline(config)
+
+    assert summary["input_finding_count"] == 3
+    assert summary["group_count"] == 2  # 2 duplicates merged into 1 group
+    assert summary["output_record_count"] == summary["group_count"]
+
+    assert output_jsonl.exists()
+    records = read_jsonl(output_jsonl)
+    assert len(records) == 2
+
+    # Validate schema for all records
+    for rec in records:
+        is_valid, err = validate_record_schema(rec, schema_file)
+        assert is_valid, f"Schema error: {err}"
+
+    # Check preserved source finding IDs and deduplicated locations
+    merged_record = next(r for r in records if len(r["source_finding_ids"]) > 1)
+    assert "opengrep-dup-1" in merged_record["source_finding_ids"]
+    assert "opengrep-dup-2" in merged_record["source_finding_ids"]
+    assert len(merged_record["locations"]) == 1
 
 
 def test_pipeline_hallucinated_output_retry(tmp_path):
