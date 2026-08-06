@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SecurityAnalysisRecord",
+  "description": "Schema for a single analyzed finding group record in Project Sentinel (Week 3)",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "analysis_id",
+    "group_key",
+    "source_finding_ids",
+    "title",
+    "severity",
+    "scanner_severities",
+    "confidence",
+    "confidence_rationale",
+    "locations",
+    "cwe",
+    "owasp",
+    "evidence",
+    "explanation",
+    "preconditions",
+    "verification_steps",
+    "remediation",
+    "knowledge_refs",
+    "limitations"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "analysis_id": {
+      "type": "string",
+      "pattern": "^analysis-[a-f0-9-]+$"
+    },
+    "group_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_finding_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "info"]
+    },
+    "scanner_severities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "confidence_rationale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "locations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "line"],
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "type": "string",
+            "minLength": 1
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "cwe": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "owasp": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["type", "finding_id", "content"],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "scanner"
+              },
+              "finding_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "content": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type", "path", "start_line", "end_line", "content"],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "source"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "start_line": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end_line": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "content": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    "explanation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "preconditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "verification_steps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "remediation": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "knowledge_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "score"],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "score": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
