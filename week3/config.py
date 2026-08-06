@@ -35,9 +35,9 @@ class AppConfig:
     project_root: Path = field(default_factory=lambda: Path(__file__).resolve().parent.parent)
     knowledge_dir: Path = field(default_factory=lambda: Path(__file__).resolve().parent.parent / "knowledge")
     schema_path: Path = field(default_factory=lambda: Path(__file__).resolve().parent.parent / "schemas" / "security-analysis-record.schema.json")
-    default_input: Path = field(default_factory=lambda: Path(__file__).resolve().parent.parent / "results" / "normalized" / "findings.json")
-    default_output: Path = field(default_factory=lambda: Path(__file__).resolve().parent.parent / "results" / "analysis" / "security-analysis.jsonl")
-    default_summary: Path = field(default_factory=lambda: Path(__file__).resolve().parent.parent / "results" / "analysis" / "run-summary.json")
+    input_findings_path: Path = field(default_factory=lambda: Path(__file__).resolve().parent.parent / "results" / "normalized" / "findings.json")
+    output_jsonl_path: Path = field(default_factory=lambda: Path(__file__).resolve().parent.parent / "results" / "analysis" / "security-analysis.jsonl")
+    summary_path: Path = field(default_factory=lambda: Path(__file__).resolve().parent.parent / "results" / "analysis" / "run-summary.json")
     
     # LLM Settings
     provider_type: str = field(default_factory=lambda: os.getenv("LLM_PROVIDER", "openrouter"))
@@ -48,6 +48,7 @@ class AppConfig:
         os.getenv("LLM_TIMEOUT_SECONDS", os.getenv("LLM_TIMEOUT", "60"))
     ))
     max_retries: int = field(default_factory=lambda: int(os.getenv("LLM_MAX_RETRIES", "1")))
+    validation_max_retries: int = field(default_factory=lambda: int(os.getenv("VALIDATION_MAX_RETRIES", "1")))
     
     # Analysis Limits & Parameters
     top_k_knowledge: int = 3
@@ -65,7 +66,29 @@ class AppConfig:
             raise ValueError("LLM_BASE_URL must be an HTTPS URL")
 
     @classmethod
-    def from_env(cls, dotenv_path: Optional[Path] = None) -> "AppConfig":
-        """Factory method creating AppConfig instance from environment variables."""
+    def from_env(
+        cls,
+        dotenv_path: Optional[Path] = None,
+        input_findings_path: Optional[Path] = None,
+        output_jsonl_path: Optional[Path] = None,
+        summary_path: Optional[Path] = None,
+        provider_type: Optional[str] = None,
+        knowledge_dir: Optional[Path] = None,
+        validation_max_retries: Optional[int] = None
+    ) -> "AppConfig":
+        """Factory method creating AppConfig instance from environment variables and CLI overrides."""
         _load_dotenv(dotenv_path=dotenv_path)
-        return cls()
+        kwargs = {}
+        if input_findings_path is not None:
+            kwargs["input_findings_path"] = input_findings_path
+        if output_jsonl_path is not None:
+            kwargs["output_jsonl_path"] = output_jsonl_path
+        if summary_path is not None:
+            kwargs["summary_path"] = summary_path
+        if provider_type is not None:
+            kwargs["provider_type"] = provider_type
+        if knowledge_dir is not None:
+            kwargs["knowledge_dir"] = knowledge_dir
+        if validation_max_retries is not None:
+            kwargs["validation_max_retries"] = validation_max_retries
+        return cls(**kwargs)

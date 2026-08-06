@@ -30,3 +30,4 @@ __pycache__/
 
 # Local raw scan output (regenerate with make scan). Normalized findings are committed.
 results/raw/
+results/analysis/

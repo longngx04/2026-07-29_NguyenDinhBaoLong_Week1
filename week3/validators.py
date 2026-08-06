@@ -68,14 +68,17 @@ def validate_provenance(
     record_dict: Dict[str, Any],
     input_group_finding_ids: List[str],
     input_locations: List[Dict[str, Any]],
-    input_knowledge_paths: List[str]
+    input_knowledge_paths: List[str],
+    input_cwes: Optional[List[str]] = None,
+    input_owasps: Optional[List[str]] = None,
+    input_source_evidence: Optional[List[Dict[str, Any]]] = None
 ) -> Tuple[bool, List[str]]:
     """Validate provenance of LLM output against supplied input packet data.
     
     Returns:
         (is_valid, list_of_errors)
     """
-    errors = []
+    errors: List[str] = []
 
     # 1. source_finding_ids must be subset of input_group_finding_ids
     rec_ids = record_dict.get("source_finding_ids", [])
@@ -98,6 +101,24 @@ def validate_provenance(
         if kpath not in input_knowledge_paths:
             errors.append(f"Invented knowledge_ref path '{kpath}' not in retrieved hits")
 
-    # Phase 4: extend provenance — cwe, owasp, evidence path/range
+    # 4. cwe must be subset of input_cwes (empty input = only [] valid)
+    valid_cwes = set(input_cwes or [])
+    for cwe in record_dict.get("cwe", []):
+        if cwe not in valid_cwes:
+            errors.append(f"Invented CWE '{cwe}' not present in input group")
+
+    # 5. owasp must be subset of input_owasps (empty input = only [] valid)
+    valid_owasps = set(input_owasps or [])
+    for owasp in record_dict.get("owasp", []):
+        if owasp not in valid_owasps:
+            errors.append(f"Invented OWASP '{owasp}' not present in input group")
+
+    # 6. source evidence refs must match input_source_evidence paths
+    valid_ev_paths = {ev.get("path") for ev in (input_source_evidence or []) if ev.get("path")}
+    for ev in record_dict.get("evidence", []):
+        if ev.get("type") == "source":
+            ev_path = ev.get("path")
+            if not ev_path or ev_path not in valid_ev_paths:
+                errors.append(f"Invented source evidence path '{ev_path}' not present in input evidence")
 
     return len(errors) == 0, errors

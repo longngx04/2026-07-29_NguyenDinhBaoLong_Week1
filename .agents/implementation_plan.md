@@ -8,20 +8,14 @@
 
 ## CURRENT TASK FOR ANTIGRAVITY (execute next)
 
-**Priority:** Implement OpenRouter direct-call path for real analysis runs.
+**Status:** Phase 1, Phase 2, Phase 3, and Phase 4 completed & verified.
+
+- **Phase 1:** Core structure, Typed models, Input loader, FakeLLM, JSON Schema validation, OpenRouter direct HTTPS client (`week3/llm/openrouter.py`).
+- **Phase 2:** Source evidence window extraction (`week3/evidence.py`), deduplication grouping (`week3/grouping.py`), knowledge retrieval (`week3/retrieval.py`), packet builder (`week3/packet_builder.py`).
+- **Phase 3:** System prompt (`prompts/security_analysis_system.md`), prompt builder (`week3/prompt_builder.py`), SHA256 provenance hashing, group analysis coordinator (`week3/analyzer.py`).
+- **Phase 4:** Post-LLM schema & provenance validation (`week3/validators.py`), full pipeline execution & atomic JSONL writer (`week3/pipeline.py`), summary writer (`run-summary.json`), CLI entry point (`week3/cli.py`), Makefile targets (`analyze`, `analyze-mock`, `validate-analysis`). All 51 pytest unit tests pass offline.
 
 **Authoritative design:** [`docs/superpowers/specs/2026-08-06-openrouter-direct-analysis-design.md`](../docs/superpowers/specs/2026-08-06-openrouter-direct-analysis-design.md)
-
-**Authoritative step plan:** [`docs/superpowers/plans/2026-08-06-openrouter-direct-analysis.md`](../docs/superpowers/plans/2026-08-06-openrouter-direct-analysis.md)
-
-**Do this now (Phase 3 override):**
-
-1. Update `week3/config.py` for OpenRouter env defaults (`LLM_PROVIDER=openrouter`, `LLM_BASE_URL=https://openrouter.ai/api/v1`, `LLM_MODEL=deepseek/deepseek-v4-flash-0731`, prefer `LLM_TIMEOUT_SECONDS`).
-2. Implement `week3/llm/openrouter.py` as a **direct HTTPS** Chat Completions caller (stdlib only; no OpenAI SDK / LangChain).
-3. Keep `FakeLLM` for tests/CI; never call OpenRouter from tests.
-4. Add `.env.example` + ensure `.env` is gitignored; update README run instructions.
-5. Add mocked HTTP unit tests (no network).
-6. Do **not** invent a silent FakeLLM fallback when OpenRouter fails.
 
 **Verify before Round 2 handoff:**
 

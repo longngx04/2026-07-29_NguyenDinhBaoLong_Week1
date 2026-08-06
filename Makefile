@@ -1,7 +1,7 @@
 SHELL := /usr/bin/env bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: target-up target-down scan scan-opengrep normalize search
+.PHONY: target-up target-down scan scan-opengrep normalize search analyze analyze-mock validate-analysis
 
 target-up:
 	@docker compose up --detach webgoat
@@ -30,3 +30,19 @@ normalize:
 search:
 	@test -n "$(Q)" || (printf '%s\n' 'Usage: make search Q='\''SQL Injection'\''' >&2; exit 1)
 	@python3 -m week2.search $(Q)
+
+analyze:
+	python3 -m week3.cli analyze \
+	  --input results/normalized/findings.json \
+	  --output results/analysis/security-analysis.jsonl \
+	  --summary results/analysis/run-summary.json
+
+analyze-mock:
+	python3 -m week3.cli analyze \
+	  --input fixtures/week3/valid-findings.json \
+	  --provider fake \
+	  --output results/analysis/security-analysis.jsonl \
+	  --summary results/analysis/run-summary.json
+
+validate-analysis:
+	@python3 -c "from week3.validators import read_jsonl, validate_record_schema; records = read_jsonl('results/analysis/security-analysis.jsonl'); assert len(records) > 0; [validate_record_schema(r, 'schemas/security-analysis-record.schema.json') for r in records]; print(f'Validated {len(records)} analysis records successfully.')"
