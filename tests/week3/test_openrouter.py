@@ -164,3 +164,35 @@ def test_sanitize_error_redacts_api_key():
     sanitized = _sanitize_error(msg, key)
     assert key not in sanitized
     assert "[REDACTED_API_KEY]" in sanitized
+
+
+def test_openrouter_strips_markdown_code_fences():
+    client = OpenRouterClient(
+        api_key="sk-secret-key",
+        base_url="https://openrouter.ai/api/v1",
+        model="deepseek/deepseek-v4-flash-0731",
+    )
+    packet = AnalysisPacket(group_key="g1")
+
+    fenced_content = "```json\n{\"schema_version\": \"1.0\", \"group_key\": \"g1\"}\n```"
+    resp_body = json.dumps({
+        "id": "gen-fence-123",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "choices": [{"message": {"role": "assistant", "content": fenced_content}}],
+        "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
+    }).encode("utf-8")
+
+    class Resp:
+        def __enter__(self):
+            return self
+        def __exit__(self, *a):
+            return False
+        def read(self):
+            return resp_body
+
+    with patch("urllib.request.urlopen", return_value=Resp()):
+        result = client.analyze(packet, system_prompt="SYS")
+
+    assert result.error is None
+    assert result.parsed_response == {"schema_version": "1.0", "group_key": "g1"}
+

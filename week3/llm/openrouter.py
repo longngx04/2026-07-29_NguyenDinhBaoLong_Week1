@@ -112,8 +112,17 @@ class OpenRouterClient(LLMProvider):
                             continue
                         break
 
+                    content_clean = content_str.strip()
+                    if content_clean.startswith("```"):
+                        lines = content_clean.splitlines()
+                        if lines[0].startswith("```"):
+                            lines = lines[1:]
+                        if lines and lines[-1].startswith("```"):
+                            lines = lines[:-1]
+                        content_clean = "\n".join(lines).strip()
+
                     try:
-                        parsed = json.loads(content_str)
+                        parsed = json.loads(content_clean)
                     except json.JSONDecodeError as je:
                         last_error = f"Malformed assistant JSON response: {je}"
                         if attempts <= self.max_retries:

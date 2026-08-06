@@ -6,13 +6,14 @@ Pipeline bảo mật tĩnh trên [OWASP WebGoat](https://owasp.org/www-project-w
 | --- | --- |
 | **Week-1** | OpenGrep quét Java WebGoat, xuất JSON gốc, chạy local + CI |
 | **Week-2** | Chuẩn hóa finding sang schema chung + kho tri thức + tìm kiếm từ khóa |
+| **Week-3** | Security Analysis Agent (LLM Deduplication, Evidence, Provenance Check, JSONL & Summary) |
 
 Target chỉ bind loopback (`127.0.0.1`), nên chỉ máy local truy cập được.
 
 ## Yêu cầu
 
 - Docker Engine + Compose v2, `curl`, `jq`
-- Python 3 (Week-2)
+- Python 3.12 (Week-2 & Week-3)
 - Nếu clone bằng Git: khởi tạo submodule WebGoat trước
 
 ## Cấu trúc chính
@@ -22,10 +23,13 @@ rules/opengrep/          # Rule SAST Java
 targets/webgoat/         # WebGoat v2025.3 (submodule)
 results/raw/             # OpenGrep JSON gốc (local, không commit)
 results/normalized/      # Finding đã chuẩn hóa (Week-2)
+results/analysis/        # Output JSONL & run-summary (Week-3, gitignored)
 knowledge/               # OWASP Top 10, notes tool, ví dụ lỗ hổng
 week2/                   # normalize + search (Python)
+week3/                   # Security Analysis Agent (Config, Grouping, Evidence, Provenance Validation, Pipeline, CLI)
 docs/report-week1.md     # Báo cáo Week-1
 docs/report-week2.md     # Báo cáo Week-2
+docs/report-week3.md     # Báo cáo Week-3
 ```
 
 ## Week-1 — quét OpenGrep
@@ -75,32 +79,35 @@ Chi tiết: [docs/report-week2.md](docs/report-week2.md)
 
 Security Analysis Agent phân tích lỗ hổng bảo mật sử dụng LLM qua OpenRouter Chat Completions API (model `deepseek/deepseek-v4-flash-0731`) hoặc offline test boundary (`FakeLLM`).
 
-### Thiết lập môi trường:
-1. Sao chép file cấu hình mẫu `.env.example` thành `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-2. Điền `LLM_API_KEY` của bạn vào `.env` (file `.env` bị `.gitignore` chặn, không bao giờ được commit).
+### Quy trình chạy đầy đủ (Full Run Sequence):
 
-3. Runtime khi gọi `AppConfig.from_env()` sẽ tự động đọc cấu hình từ file `.env` ở project root.
-
-### Các lệnh Makefile cho Week 3:
 ```bash
-make agent-test         # Chạy full test suite offline với FakeLLM
-make analyze-mock       # Phân tích dữ liệu mẫu offline với FakeLLM
-make validate-analysis  # Kiểm tra tính hợp lệ của file JSONL kết quả với JSON Schema
-make analyze            # Phân tích dữ liệu thực tế kết hợp OpenRouter LLM (.env)
+git submodule update --init --recursive
+make normalize
+make agent-test
+cp .env.example .env  # local only, bổ sung LLM_API_KEY
+make analyze          # requires API key
+make validate-analysis
 ```
 
-### Các chế độ chạy CLI:
-- **Offline / Mock mode (CI & Tests — không network, không API key):**
-  ```bash
-  python3 -m week3.cli analyze --input fixtures/week3/valid-findings.json --provider fake
-  ```
-- **Real OpenRouter Mode:**
-  ```bash
-  python3 -m week3.cli analyze --input results/normalized/findings.json --provider openrouter
-  ```
+### 1. Mock demo (no API key / CI & Offline)
+```bash
+make agent-test                                               # Full 63 tests offline
+make analyze-mock                                             # Demo nhanh: fixture 2 findings + FakeLLM
+make analyze-offline-full                                     # Full offline: 23 findings → 21 groups + FakeLLM
+make validate-analysis                                        # Validate JSONL với JSON Schema
+```
+
+### 2. Real OpenRouter run (requires API key)
+```bash
+cp .env.example .env                                          # Đã được .gitignore chặn
+# Thêm LLM_API_KEY=sk-or-v1-... vào file .env
+make analyze                                                  # Phân tích 23 findings thật trên WebGoat
+python3 -m week3.cli analyze --input results/normalized/findings.json --provider openrouter
+make validate-analysis                                        # Validation kết quả sau khi phân tích
+```
+
+Chi tiết: [docs/report-week3.md](docs/report-week3.md)
 
 > **Lưu ý:** Chế độ OpenRouter thật chỉ phục vụ smoke test thủ công ở môi trường local thông qua file `.env` (tuyệt đối không commit file `.env` và không dán API key trực tiếp trên dòng lệnh).
 

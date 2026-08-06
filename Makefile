@@ -1,7 +1,7 @@
 SHELL := /usr/bin/env bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: target-up target-down scan scan-opengrep normalize search analyze analyze-mock validate-analysis agent-test
+.PHONY: target-up target-down scan scan-opengrep normalize search analyze analyze-mock analyze-offline-full validate-analysis agent-test
 
 agent-test:
 	@LLM_PROVIDER=fake pytest -q tests/week3 2>/dev/null || LLM_PROVIDER=fake .venv/bin/pytest -q tests/week3
@@ -43,6 +43,13 @@ analyze:
 analyze-mock:
 	python3 -m week3.cli analyze \
 	  --input fixtures/week3/valid-findings.json \
+	  --provider fake \
+	  --output results/analysis/security-analysis.jsonl \
+	  --summary results/analysis/run-summary.json
+
+analyze-offline-full:
+	python3 -m week3.cli analyze \
+	  --input results/normalized/findings.json \
 	  --provider fake \
 	  --output results/analysis/security-analysis.jsonl \
 	  --summary results/analysis/run-summary.json
