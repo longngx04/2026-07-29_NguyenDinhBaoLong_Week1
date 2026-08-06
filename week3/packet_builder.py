@@ -24,11 +24,7 @@ def build_analysis_packet(
     p_root = project_root or config.project_root
     
     # Determine target_root boundary
-    if target_root is None:
-        default_target = p_root / "targets" / "webgoat"
-        t_root = default_target if default_target.exists() else p_root
-    else:
-        t_root = target_root
+    t_root = target_root or config.target_root
 
     finding_group_dict = group.to_packet_group_dict()
 

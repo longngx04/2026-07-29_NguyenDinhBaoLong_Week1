@@ -84,10 +84,23 @@ Security Analysis Agent phân tích lỗ hổng bảo mật sử dụng LLM qua 
 
 3. Runtime khi gọi `AppConfig.from_env()` sẽ tự động đọc cấu hình từ file `.env` ở project root.
 
-### Các chế độ chạy:
+### Các lệnh Makefile cho Week 3:
+```bash
+make agent-test         # Chạy full test suite offline với FakeLLM
+make analyze-mock       # Phân tích dữ liệu mẫu offline với FakeLLM
+make validate-analysis  # Kiểm tra tính hợp lệ của file JSONL kết quả với JSON Schema
+make analyze            # Phân tích dữ liệu thực tế kết hợp OpenRouter LLM (.env)
+```
+
+### Các chế độ chạy CLI:
 - **Offline / Mock mode (CI & Tests — không network, không API key):**
   ```bash
-  LLM_PROVIDER=fake python3 -m pytest -q tests/week3
+  python3 -m week3.cli analyze --input fixtures/week3/valid-findings.json --provider fake
   ```
+- **Real OpenRouter Mode:**
+  ```bash
+  python3 -m week3.cli analyze --input results/normalized/findings.json --provider openrouter
+  ```
+
 > **Lưu ý:** Chế độ OpenRouter thật chỉ phục vụ smoke test thủ công ở môi trường local thông qua file `.env` (tuyệt đối không commit file `.env` và không dán API key trực tiếp trên dòng lệnh).
 

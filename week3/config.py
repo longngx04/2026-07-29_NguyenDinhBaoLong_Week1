@@ -38,6 +38,7 @@ class AppConfig:
     input_findings_path: Path = field(default_factory=lambda: Path(__file__).resolve().parent.parent / "results" / "normalized" / "findings.json")
     output_jsonl_path: Path = field(default_factory=lambda: Path(__file__).resolve().parent.parent / "results" / "analysis" / "security-analysis.jsonl")
     summary_path: Path = field(default_factory=lambda: Path(__file__).resolve().parent.parent / "results" / "analysis" / "run-summary.json")
+    target_root: Path = field(default_factory=lambda: Path(__file__).resolve().parent.parent / "targets" / "webgoat")
     
     # LLM Settings
     provider_type: str = field(default_factory=lambda: os.getenv("LLM_PROVIDER", "openrouter"))
@@ -74,6 +75,7 @@ class AppConfig:
         summary_path: Optional[Path] = None,
         provider_type: Optional[str] = None,
         knowledge_dir: Optional[Path] = None,
+        target_root: Optional[Path] = None,
         validation_max_retries: Optional[int] = None
     ) -> "AppConfig":
         """Factory method creating AppConfig instance from environment variables and CLI overrides."""
@@ -89,6 +91,8 @@ class AppConfig:
             kwargs["provider_type"] = provider_type
         if knowledge_dir is not None:
             kwargs["knowledge_dir"] = knowledge_dir
+        if target_root is not None:
+            kwargs["target_root"] = target_root
         if validation_max_retries is not None:
             kwargs["validation_max_retries"] = validation_max_retries
         return cls(**kwargs)

@@ -1,7 +1,10 @@
 SHELL := /usr/bin/env bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: target-up target-down scan scan-opengrep normalize search analyze analyze-mock validate-analysis
+.PHONY: target-up target-down scan scan-opengrep normalize search analyze analyze-mock validate-analysis agent-test
+
+agent-test:
+	@LLM_PROVIDER=fake pytest -q tests/week3 2>/dev/null || LLM_PROVIDER=fake .venv/bin/pytest -q tests/week3
 
 target-up:
 	@docker compose up --detach webgoat
@@ -45,4 +48,4 @@ analyze-mock:
 	  --summary results/analysis/run-summary.json
 
 validate-analysis:
-	@python3 -c "from week3.validators import read_jsonl, validate_record_schema; records = read_jsonl('results/analysis/security-analysis.jsonl'); assert len(records) > 0; [validate_record_schema(r, 'schemas/security-analysis-record.schema.json') for r in records]; print(f'Validated {len(records)} analysis records successfully.')"
+	@python3 -m week3.cli validate --input results/analysis/security-analysis.jsonl
