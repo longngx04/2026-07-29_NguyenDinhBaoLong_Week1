@@ -89,7 +89,7 @@ Do **not** re-read the entire repository unless the user explicitly requests it.
 
 If no actionable issues: return the table with a single row `— | — | No actionable findings | — | —`.
 
-### Mid-review upgrade → Round 3
+After the escalation decision, always output the **Antigravity fix prompt** (see [`rules/role_reviewer.md`](rules/role_reviewer.md)).
 
 If Round 2 started on Light or Standard and a deeper pass is needed, upgrade to Deep and re-review.
 See Round 3 triggers below.

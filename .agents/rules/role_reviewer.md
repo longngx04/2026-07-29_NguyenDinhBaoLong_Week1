@@ -119,6 +119,33 @@ MODEL UPGRADE: <Light|Standard> → Deep — <reason>
 
 See [`role_reviewer_escalation.md`](role_reviewer_escalation.md) for Round 3 output format.
 
+### 4. Antigravity fix prompt (mandatory — always last section)
+
+After every review, output a **copy-paste-ready prompt** for the user to send to Antigravity.
+This is the handoff from Round 2 → Round 1 (fix pass). Write it even when `VERDICT: APPROVE`
+(no fixes needed — prompt says "no changes required, proceed to next phase").
+
+Format:
+
+````markdown
+## Prompt cho Antigravity (copy-paste)
+
+```
+<self-contained prompt Antigravity can execute without reading this review thread>
+```
+````
+
+Prompt rules:
+
+- Write in **Vietnamese** (user-facing); giữ **file paths, commands, field names** bằng English.
+- List fixes **theo thứ tự ưu tiên**: Critical/High trước, Medium/Low sau.
+- Mỗi fix: **file cụ thể → thay đổi cụ thể → cách verify**.
+- Include **scope guard**: chỉ sửa findings đã báo; không refactor ngoài scope.
+- Include **verify commands** Antigravity phải chạy trước handoff.
+- Include **handoff format** (git diff + acceptance criteria) từ [`role_coder.md`](role_coder.md).
+- Nếu không có finding actionable: prompt nói rõ "Phase X approved — proceed to Phase Y".
+- Do **not** reference "the review above" — prompt must stand alone.
+
 ## Constraints
 
 1. **Do not implement fixes.** No code edits unless the user explicitly overrides this workflow.

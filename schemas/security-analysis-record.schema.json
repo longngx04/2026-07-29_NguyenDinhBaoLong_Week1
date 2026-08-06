@@ -64,7 +64,8 @@
       "enum": ["high", "medium", "low"]
     },
     "confidence_rationale": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "locations": {
       "type": "array",
@@ -74,7 +75,8 @@
         "additionalProperties": false,
         "properties": {
           "file": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "line": {
             "type": "integer",
@@ -98,35 +100,59 @@
     },
     "evidence": {
       "type": "array",
+      "minItems": 1,
       "items": {
-        "type": "object",
-        "required": ["type"],
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": ["scanner", "source"]
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["type", "finding_id", "content"],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "scanner"
+              },
+              "finding_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "content": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
           },
-          "finding_id": {
-            "type": ["string", "null"]
-          },
-          "content": {
-            "type": "string"
-          },
-          "path": {
-            "type": ["string", "null"]
-          },
-          "start_line": {
-            "type": ["integer", "null"]
-          },
-          "end_line": {
-            "type": ["integer", "null"]
+          {
+            "type": "object",
+            "required": ["type", "path", "start_line", "end_line", "content"],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "source"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "start_line": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end_line": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "content": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
           }
-        },
-        "additionalProperties": false
+        ]
       }
     },
     "explanation": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "preconditions": {
       "type": "array",
@@ -154,7 +180,8 @@
         "additionalProperties": false,
         "properties": {
           "path": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "score": {
             "type": "number"

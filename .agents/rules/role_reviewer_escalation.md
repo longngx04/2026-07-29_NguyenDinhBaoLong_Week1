@@ -82,6 +82,13 @@ Round 2 escalation: confirmed | partially confirmed | overturned
 Summary: <one sentence>
 ```
 
+### 5. Antigravity fix prompt (mandatory — always last section)
+
+Same rules as Round 2 — see [`role_reviewer.md`](role_reviewer.md) § "Antigravity fix prompt".
+
+When Round 3 confirms defects, the prompt must include **only confirmed defects** (not false positives).
+When Round 3 overturns Round 2 findings, the prompt must say explicitly which Round 2 items to **ignore**.
+
 ## Constraints
 
 - Do **not** suggest broad refactoring unless it is the only way to fix a confirmed defect.
