@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "input_finding_count": 23,
+  "group_count": 21,
+  "output_record_count": 21,
+  "llm_call_count": 21,
+  "retry_count": 0,
+  "invalid_output_count": 0,
+  "runtime_ms": 198.37,
+  "token_usage": {
+    "prompt": 3150,
+    "completion": 2100,
+    "total": 5250
+  },
+  "model": "fake-llm",
+  "prompt_sha256": "cdb25f76d67b3ae0733a9b1cd97299a6b410e80975cde70300444d8e70bdd6f5"
+}
