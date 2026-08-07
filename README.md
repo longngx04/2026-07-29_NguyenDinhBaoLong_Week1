@@ -77,7 +77,7 @@ Chi tiết: [docs/report-week2.md](docs/report-week2.md)
 
 ## Week-3 — Security Analysis Agent (LLM)
 
-Security Analysis Agent phân tích lỗ hổng bảo mật sử dụng LLM qua OpenRouter Chat Completions API (model `deepseek/deepseek-v4-flash-0731`) hoặc offline test boundary (`FakeLLM`).
+Security Analysis Agent phân tích lỗ hổng bảo mật sử dụng LLM qua OpenRouter (model `deepseek/deepseek-v4-flash-0731`) hoặc offline test boundary (`FakeLLM`).
 
 ### Quy trình chạy đầy đủ (Full Run Sequence):
 
