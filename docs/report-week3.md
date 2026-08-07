@@ -326,6 +326,8 @@ make analyze
 
 ---
 
+
+
 ## 12. Kết luận
 
 Week 3 đã hoàn thành mục tiêu chính: xây dựng **Security Analysis Agent** dạng pipeline xác định (deterministic preprocessing + bounded LLM + post-validation), thay vì chỉ gọi model sinh text tự do.
@@ -336,9 +338,4 @@ Các kết quả then chốt:
 2. **Evidence-grounded:** Mỗi group được bổ sung source snippet (read-only, có kiểm soát path) và top-k knowledge hits tái sử dụng `week2.search`.
 3. **Chống hallucination có kiểm chứng bằng code:** System Prompt đặt soft rules; `validators` enforce hard rules trên `source_finding_ids`, locations, CWE/OWASP và knowledge refs. Suite **63 tests** chạy offline bằng `FakeLLM`.
 4. **Triage có ý nghĩa hơn scanner raw:** Phân tách `scanner_severities` và `severity` phân tích; confidence phản ánh thiếu data-flow thay vì mặc định coi mọi sink là confirmed high.
-5. **Handoff sẵn sàng cho Week 4:** Output chứa `verification_steps` / `remediation` ở mức đề xuất an toàn, chưa thực thi request — đúng scope Week 3.
-
-**Artifact đã commit kèm report:** `results/analysis/security-analysis.jsonl` và `results/analysis/run-summary.json` (full offline FakeLLM trên 23 findings) để mentor review trực tiếp mà không cần chạy lại pipeline.
-
-**Phạm vi còn mở:** chạy thật qua OpenRouter khi có API key (`make analyze`); tăng độ tin cậy bằng data-flow / verification thực thi ở các tuần sau. Week 3 dừng đúng ở lớp phân tích có provenance, ổn định và có thể kiểm thử tái lập.
 
