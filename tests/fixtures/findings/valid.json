@@ -1,0 +1,36 @@
+{
+  "source": "opengrep",
+  "count": 2,
+  "findings": [
+    {
+      "id": "opengrep-001",
+      "tool": "opengrep",
+      "tool_version": "1.26.0",
+      "severity": "high",
+      "file_or_url": "benchmarks/targets/webgoat/src/main/java/org/dummy/insecure/framework/VulnerableTaskHolder.java",
+      "line": 69,
+      "title": "Potential command injection",
+      "rule_id": "java-command-execution",
+      "cwe": "CWE-78",
+      "owasp": "A03:2021-Injection",
+      "message": "Potential command injection: Runtime.exec receives a command value.",
+      "confidence": "MEDIUM",
+      "fingerprint": "fp1"
+    },
+    {
+      "id": "opengrep-002",
+      "tool": "opengrep",
+      "tool_version": "1.26.0",
+      "severity": "high",
+      "file_or_url": "benchmarks/targets/webgoat/src/main/java/org/owasp/webgoat/container/lessons/LessonConnectionInvocationHandler.java",
+      "line": 31,
+      "title": "Potential SQL injection",
+      "rule_id": "java-sql-statement-execution",
+      "cwe": "CWE-89",
+      "owasp": "A03:2021-Injection",
+      "message": "Potential SQL injection: Statement execution method receives a query value.",
+      "confidence": "MEDIUM",
+      "fingerprint": "fp2"
+    }
+  ]
+}

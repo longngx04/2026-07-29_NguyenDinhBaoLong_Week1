@@ -3,36 +3,41 @@ MODE
 PROJECT_TYPE
 .flow/
 
-# Internal buildflow / planning artifacts — not part of Week-1 mentor handoff.
+# Internal buildflow / planning artifacts
 flow/
 cards/
 docs/ground-truth.md
 DESIGN.md
 RETRO.md
 
-# OpenGrep binary is downloaded by scripts/scan-opengrep.sh before image build.
-scanner/opengrep
+# OpenGrep binary downloaded before image build
+infra/docker/scanner/opengrep
 
-# Operator-provided project briefs are kept local rather than published with the demo.
+# Operator-provided project briefs
 *.pdf
 
 # Local secrets (copy from .env.example; never commit)
 .env
 
-# Python virtual environment and egg info
+# Python virtual environment, egg info, build artifacts
 .venv/
 *.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
 
 # Python bytecode
 __pycache__/
 *.py[cod]
 
+# Runtime generated outputs under artifacts/
+artifacts/raw/*
+artifacts/normalized/*
+artifacts/analysis/*
 
-# Local raw scan output (regenerate with make scan). Normalized findings are committed.
-results/raw/
-# Week-3 analysis outputs: commit baseline JSONL + summary for mentor review;
-# ignore other generated artifacts under this directory.
-results/analysis/*
-!results/analysis/security-analysis.jsonl
-!results/analysis/run-summary.json
-
+# Preserve committed baseline artifacts
+!artifacts/normalized/findings.json
+!artifacts/analysis/security-analysis.jsonl
+!artifacts/analysis/run-summary.json

@@ -3,15 +3,15 @@ name: sentinel-sec
 services:
   scanner:
     build:
-      context: ./scanner
+      context: ./infra/docker/scanner
     image: sentinel-sec/scanner:local
     working_dir: /workspace
     entrypoint: []
     profiles: ["scanner"]
     volumes:
-      - ./targets/webgoat:/workspace/targets/webgoat:ro
-      - ./rules/opengrep:/workspace/rules/opengrep:ro
-      - ./results:/workspace/results
+      - ./benchmarks/targets/webgoat:/workspace/benchmarks/targets/webgoat:ro
+      - ./configs/opengrep:/workspace/configs/opengrep:ro
+      - ./artifacts:/workspace/artifacts
 
   webgoat:
     image: webgoat/webgoat:v2025.3

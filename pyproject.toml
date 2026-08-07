@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "project-sentinel-week3"
+name = "project-sentinel"
 version = "0.1.0"
-description = "Security Analysis Agent - Week 3"
+description = "Security finding normalization and AI-assisted analysis pipeline"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -17,6 +17,17 @@ dev = [
     "pytest>=8.0",
 ]
 
+[project.scripts]
+project-sentinel = "project_sentinel.cli:main"
+
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["week2*", "week3*"]
+where = ["src"]
+include = ["project_sentinel*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+    "--import-mode=importlib",
+    "--strict-config",
+    "--strict-markers",
+]
