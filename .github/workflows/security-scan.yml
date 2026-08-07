@@ -1,4 +1,4 @@
-name: Week-3 security scan & agent test
+name: Project Sentinel CI
 
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
 
       - name: Validate raw report format
         run: |
-          jq -e 'type == "object" and (.results | type == "array") and (.errors | type == "array")' results/raw/opengrep.json
+          jq -e 'type == "object" and (.results | type == "array") and (.errors | type == "array")' artifacts/raw/opengrep.json
 
       - name: Run offline agent tests
         run: make agent-test
@@ -44,9 +44,9 @@ jobs:
       - name: Validate analysis output JSONL schema
         run: make validate-analysis
 
-      - name: Upload Week-1 raw scan report
+      - name: Upload raw scan report
         uses: actions/upload-artifact@v4
         with:
-          name: week1-raw-scan-reports
+          name: raw-scan-reports
           if-no-files-found: error
-          path: results/raw/opengrep.json
+          path: artifacts/raw/opengrep.json

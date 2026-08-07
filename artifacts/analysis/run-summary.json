@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "input_finding_count": 23,
+  "group_count": 21,
+  "output_record_count": 20,
+  "llm_call_count": 24,
+  "retry_count": 3,
+  "invalid_output_count": 1,
+  "runtime_ms": 1223002.81,
+  "token_usage": {
+    "prompt": 33069,
+    "completion": 61823,
+    "total": 94892
+  },
+  "model": "deepseek/deepseek-v4-flash-0731",
+  "prompt_sha256": "a6636ea057c141782809ee7db38da22bf696c4ead6a3d331b7dac823f67341d4"
+}

@@ -1,112 +1,93 @@
 # Project Sentinel
 
-Pipeline bảo mật tĩnh trên [OWASP WebGoat](https://owasp.org/www-project-webgoat/) — ứng dụng cố ý có lỗ hổng để học và demo.
+AI-assisted SAST finding normalization, knowledge retrieval, and security analysis pipeline evaluated on [OWASP WebGoat](https://owasp.org/www-project-webgoat/).
 
-| Tuần | Việc đã có |
-| --- | --- |
-| **Week-1** | OpenGrep quét Java WebGoat, xuất JSON gốc, chạy local + CI |
-| **Week-2** | Chuẩn hóa finding sang schema chung + kho tri thức + tìm kiếm từ khóa |
-| **Week-3** | Security Analysis Agent (LLM Deduplication, Evidence, Provenance Check, JSONL & Summary) |
+---
 
-Target chỉ bind loopback (`127.0.0.1`), nên chỉ máy local truy cập được.
+## Pipeline Overview
 
-## Yêu cầu
-
-- Docker Engine + Compose v2, `curl`, `jq`
-- Python 3.12 (Week-2 & Week-3)
-- Nếu clone bằng Git: khởi tạo submodule WebGoat trước
-
-## Cấu trúc chính
-
-```
-rules/opengrep/          # Rule SAST Java
-targets/webgoat/         # WebGoat v2025.3 (submodule)
-results/raw/             # OpenGrep JSON gốc (local, không commit)
-results/normalized/      # Finding đã chuẩn hóa (Week-2)
-results/analysis/        # Output JSONL & run-summary (Week-3 baseline committed)
-knowledge/               # OWASP Top 10, notes tool, ví dụ lỗ hổng
-week2/                   # normalize + search (Python)
-week3/                   # Security Analysis Agent (Config, Grouping, Evidence, Provenance Validation, Pipeline, CLI)
-docs/report-week1.md     # Báo cáo Week-1
-docs/report-week2.md     # Báo cáo Week-2
-docs/report-week3.md     # Báo cáo Week-3
+```text
+OpenGrep (SAST)
+  └─> artifacts/raw/opengrep.json
+        │
+        ▼
+Ingestion (Normalizer)
+  └─> artifacts/normalized/findings.json
+        │
+        ▼
+Knowledge Retrieval
+  └─> data/knowledge-base/
+        │
+        ▼
+Security Analysis Agent (LLM + Provenance Validation)
+  └─> artifacts/analysis/security-analysis.jsonl
 ```
 
-## Week-1 — quét OpenGrep
+---
+
+## Repository Structure
+
+```text
+project-sentinel/
+├── src/project_sentinel/         # Production Python code (ingestion, retrieval, analysis, llm)
+├── tests/                        # Unit, integration tests, and fixtures
+├── data/knowledge-base/          # OWASP & vulnerability knowledge base
+├── configs/                      # Prompts and OpenGrep rules
+├── schemas/                      # JSON Schema definitions
+├── artifacts/                    # Active runtime outputs (raw, normalized, analysis)
+├── reports/                      # Historical sprint reports (week-01, week-02, week-03)
+├── benchmarks/targets/webgoat/   # WebGoat benchmark (Git submodule)
+└── infra/docker/scanner/         # Docker scanner environment
+```
+
+---
+
+## Quick Start
 
 ```bash
-git submodule update --init --recursive   # chỉ khi clone Git
-make target-up
-# Mở trình duyệt: http://127.0.0.1:8080/WebGoat/
-make scan
-make target-down
-```
-
-- Báo cáo gốc: `results/raw/opengrep.json`
-- CI (`.github/workflows/security-scan.yml`) chạy cùng lệnh scan và upload artifact `week1-raw-scan-reports`
-
-Chi tiết: [docs/report-week1.md](docs/report-week1.md)
-
-## Week-2 — normalize & search
-
-Cần có `results/raw/opengrep.json` (chạy `make scan` nếu chưa có). Repo đã kèm `results/normalized/findings.json` (23 findings).
-
-```bash
-make normalize
-make search Q='SQL Injection'
-make search Q='XSS'
-```
-
-Hoặc:
-
-```bash
-python3 -m week2.normalize
-python3 -m week2.search "SQL Injection"
-python3 -m week2.search "XSS"
-```
-
-| Output | Path |
-| --- | --- |
-| Finding chuẩn hóa | `results/normalized/findings.json` |
-| Kho tri thức | `knowledge/` |
-| Package | `week2/` |
-
-Schema finding (rút gọn): `tool`, `severity`, `file_or_url`, `title`, `cwe`, `owasp`, …
-
-Chi tiết: [docs/report-week2.md](docs/report-week2.md)
-
-## Week-3 — Security Analysis Agent (LLM)
-
-Security Analysis Agent phân tích lỗ hổng bảo mật sử dụng LLM qua OpenRouter (model `deepseek/deepseek-v4-flash-0731`) hoặc offline test boundary (`FakeLLM`).
-
-### Quy trình chạy đầy đủ (Full Run Sequence):
-
-```bash
+# Clone with submodules (if downloading fresh)
 git submodule update --init --recursive
-make normalize
+
+# Install editable Python package
+pip install -e '.[dev]'
+
+# Run fast offline test suite
 make agent-test
-cp .env.example .env  # local only, bổ sung LLM_API_KEY
-make analyze          # requires API key
+
+# Run mock analysis pipeline (no API key required)
+make analyze-mock
 make validate-analysis
 ```
 
-### 1. Mock demo (no API key / CI & Offline)
+---
+
+## Common Commands
+
 ```bash
-make agent-test                                               # Full 63 tests offline
-make analyze-mock                                             # Demo nhanh: fixture 2 findings + FakeLLM
-make analyze-offline-full                                     # Full offline: 23 findings → 21 groups + FakeLLM
-make validate-analysis                                        # Validate JSONL với JSON Schema
+# Normalize raw OpenGrep output
+make normalize
+
+# Search security knowledge base
+make search Q='SQL Injection'
+
+# Real OpenRouter analysis run (requires LLM_API_KEY in .env)
+cp .env.example .env
+make analyze
+make validate-analysis
 ```
 
-### 2. Real OpenRouter run (requires API key)
-```bash
-cp .env.example .env                                          # Đã được .gitignore chặn
-# Thêm LLM_API_KEY=sk-or-v1-... vào file .env
-make analyze                                                  # Phân tích 23 findings thật trên WebGoat
-python3 -m week3.cli analyze --input results/normalized/findings.json --provider openrouter
-make validate-analysis                                        # Validation kết quả sau khi phân tích
-```
+---
 
-Chi tiết: [docs/report-week3.md](docs/report-week3.md)
+## Historical Sprint Reports
 
+- [Week 1 Report — OpenGrep SAST Setup](reports/week-01/report.md)
+- [Week 2 Report — Finding Normalization & Knowledge Retrieval](reports/week-02/report.md)
+- [Week 3 Report — Security Analysis Agent & Provenance Guardrails](reports/week-03/report.md)
 
+---
+
+## Security Invariants & Target Binding
+
+> **SECURITY NOTE**: OWASP WebGoat is an intentionally vulnerable benchmark application.
+> The `docker-compose.yml` configuration strictly binds all container ports to loopback (`127.0.0.1:8080:8080`).
+> Do not modify container networking to expose WebGoat on public network interfaces (`0.0.0.0`).
