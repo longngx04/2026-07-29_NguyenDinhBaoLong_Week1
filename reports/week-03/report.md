@@ -111,13 +111,13 @@ Mỗi bản ghi phân tích trong `artifacts/analysis/security-analysis.jsonl` t
 ```json
 {
   "schema_version": "1.0",
-  "analysis_id": "analysis-e5fc8364c0c3",
+  "analysis_id": "analysis-ec6d207761-0001",
   "group_key": "group-ec6d207761",
   "source_finding_ids": [
     "opengrep-001"
   ],
   "title": "Potential command injection",
-  "severity": "medium",
+  "severity": "high",
   "scanner_severities": [
     "high"
   ],
@@ -142,15 +142,17 @@ Mỗi bản ghi phân tích trong `artifacts/analysis/security-analysis.jsonl` t
       "content": "Potential vulnerability detected by scanner"
     }
   ],
-  "explanation": "Mock analysis: Potential security issue in the supplied code.",
+  "explanation": "Đoạn mã gọi Runtime.getRuntime().exec(taskAction) với biến taskAction. Nếu taskAction chứa dữ liệu không tin cậy và không được sanitize đúng cách, kẻ tấn công có thể chèn lệnh hệ thống.",
   "preconditions": [
-    "Input is controlled by an external untrusted user."
+    "taskAction phải chịu ảnh hưởng bởi input không tin cậy; điều này chưa được chứng minh đầy đủ chỉ từ snippet hiện tại."
   ],
   "verification_steps": [
-    "Verify whether parameterized queries or validation is used."
+    "Trace nguồn gốc của taskAction tới caller/input.",
+    "Xác nhận có validation/whitelist trước khi gọi Runtime.exec."
   ],
   "remediation": [
-    "Apply safe parameterization or input sanitization."
+    "Dùng ProcessBuilder với danh sách argument tách biệt, tránh shell interpretation.",
+    "Validate hoặc whitelist giá trị trước khi thực thi."
   ],
   "knowledge_refs": [
     {
@@ -235,27 +237,27 @@ python3 -c "from project_sentinel.ingestion.input_loader import load_findings; f
 
 ### 2. Metrics Summary:
 
-> **Lưu ý:** `make analyze-mock` chỉ chạy fixture 2 findings (demo nhanh). Metrics 23→21 dưới đây lấy từ **full offline FakeLLM** trên `artifacts/normalized/findings.json`.
+> **Lưu ý:** `make analyze-mock` chỉ chạy fixture 2 findings (demo nhanh). Cột FakeLLM lấy từ `make analyze-offline-full`. Cột Real OpenRouter lấy từ `make analyze` (2026-08-07), artifact tại `artifacts/analysis/` và `reports/week-03/artifacts/`.
 
 
 | Metric                         | Offline Full Fake (`FakeLLM`)                                      | Fixture Mock (`make analyze-mock`)                                 | Real OpenRouter Run                                      |
 | ------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------ | -------------------------------------------------------- |
-| **Trạng thái (Status)**        | **Hoàn thành (Verified)**                                          | **Hoàn thành (Verified)**                                          | **Pending** (chưa có API key / chưa chạy `make analyze`) |
+| **Trạng thái (Status)**        | **Hoàn thành (Verified)**                                          | **Hoàn thành (Verified)**                                          | **Hoàn thành (Verified)**                                |
 | **Lệnh thực thi (Command)**    | `make analyze-offline-full`                                        | `make analyze-mock`                                                | `make analyze`                                           |
-| **Ngày chạy (Execution Date)** | 2026-08-06                                                         | 2026-08-06                                                         | N/A                                                      |
-| `input_finding_count`          | `23`                                                               | `2`                                                                | N/A                                                      |
-| `group_count`                  | `21`                                                               | `2`                                                                | N/A                                                      |
-| `output_record_count`          | `21`                                                               | `2`                                                                | N/A                                                      |
-| `llm_call_count`               | `21`                                                               | `2`                                                                | N/A                                                      |
-| `retry_count`                  | `0`                                                                | `0`                                                                | N/A                                                      |
-| `invalid_output_count`         | `0`                                                                | `0`                                                                | N/A                                                      |
-| `model`                        | `fake-llm`                                                         | `fake-llm`                                                         | N/A                                                      |
-| `prompt_sha256`                | `cdb25f76d67b3ae0733a9b1cd97299a6b410e80975cde70300444d8e70bdd6f5` | `d0eac5da904b6717c50e35775a5c23287ebda1e354f617ed5743166122d597b8` | N/A                                                      |
-| `runtime_ms`                   | `~200` (varies slightly mỗi lần chạy)                              | `~20`                                                              | N/A                                                      |
-| `token_usage`                  | `3150 prompt / 2100 completion / 5250 total`                       | `300 / 200 / 500`                                                  | N/A                                                      |
+| **Ngày chạy (Execution Date)** | 2026-08-06                                                         | 2026-08-06                                                         | 2026-08-07                                               |
+| `input_finding_count`          | `23`                                                               | `2`                                                                | `23`                                                     |
+| `group_count`                  | `21`                                                               | `2`                                                                | `21`                                                     |
+| `output_record_count`          | `21`                                                               | `2`                                                                | `21`                                                     |
+| `llm_call_count`               | `21`                                                               | `2`                                                                | `21`                                                     |
+| `retry_count`                  | `0`                                                                | `0`                                                                | `0`                                                      |
+| `invalid_output_count`         | `0`                                                                | `0`                                                                | `0`                                                      |
+| `model`                        | `fake-llm`                                                         | `fake-llm`                                                         | `deepseek/deepseek-v4-flash-0731`                        |
+| `prompt_sha256`                | `cdb25f76d67b3ae0733a9b1cd97299a6b410e80975cde70300444d8e70bdd6f5` | `d0eac5da904b6717c50e35775a5c23287ebda1e354f617ed5743166122d597b8` | `cdb25f76d67b3ae0733a9b1cd97299a6b410e80975cde70300444d8e70bdd6f5` |
+| `runtime_ms`                   | `~200` (varies slightly mỗi lần chạy)                              | `~20`                                                              | `759333.54` (~12.7 phút)                                 |
+| `token_usage`                  | `3150 prompt / 2100 completion / 5250 total`                       | `300 / 200 / 500`                                                  | `35090 prompt / 24273 completion / 59363 total`          |
 
 
-Reproducibility note: `prompt_sha256`, counts và `token_usage` ổn định giữa các lần chạy FakeLLM trên cùng input; `runtime_ms` dao động nhẹ theo máy.
+Reproducibility note: FakeLLM ổn định về counts/`prompt_sha256`/`token_usage` trên cùng input. Real OpenRouter giữ cùng `prompt_sha256` (system prompt không đổi) và cùng `21` records; `runtime_ms`/`token_usage` phụ thuộc mạng và model. Sau lần chạy thật, `make validate-analysis` xác nhận 21/21 records hợp lệ schema.
 
 ---
 
@@ -266,6 +268,7 @@ Reproducibility note: `prompt_sha256`, counts và `token_usage` ổn định gi�
 1. **Chưa phân tích luồng dữ liệu liên hàm (Interprocedural Data Flow):** Agent phân tích dựa trên snippet cục bộ quanh vị trí cảnh báo; chưa theo vết gọi hàm qua các file/package khác nhau.
 2. **Phụ thuộc vào mã nguồn cục bộ (Source Snippet Availability):** Khi file mã nguồn bị thiếu hoặc nằm ngoài ranh giới `target_root`, agent bổ sung ghi chú vào `limitations` thay vì trích xuất snippet mã nguồn.
 3. **Thuật toán gom nhóm dựa trên Heuristic:** Khử trùng lặp gom nhóm theo rule ID, tên file và khoảng cách dòng ($\le 5$), có thể cần tinh chỉnh khi áp dụng cho các dự án lớn.
+4. **Model reasoning trên OpenRouter:** Với `deepseek/deepseek-v4-flash-0731`, client gửi `reasoning.effort=none` để JSON nằm trong `content` (tránh trường hợp model chỉ “nghĩ” trong `reasoning` và trả content JSON rỗng/hỏng).
 
 ---
 
@@ -338,4 +341,5 @@ Các kết quả then chốt:
 2. **Evidence-grounded:** Mỗi group được bổ sung source snippet (read-only, có kiểm soát path) và top-k knowledge hits tái sử dụng `project_sentinel.retrieval.keyword_search`.
 3. **Chống hallucination có kiểm chứng bằng code:** System Prompt đặt soft rules; `validators` enforce hard rules trên `source_finding_ids`, locations, CWE/OWASP và knowledge refs. Suite **63 tests** chạy offline bằng `FakeLLM`.
 4. **Triage có ý nghĩa hơn scanner raw:** Phân tách `scanner_severities` và `severity` phân tích; confidence phản ánh thiếu data-flow thay vì mặc định coi mọi sink là confirmed high.
+5. **Real OpenRouter run đã hoàn thành (2026-08-07):** `make analyze` với model `deepseek/deepseek-v4-flash-0731` tạo đủ 21 records (0 retry / 0 invalid), đã `make validate-analysis` thành công.
 

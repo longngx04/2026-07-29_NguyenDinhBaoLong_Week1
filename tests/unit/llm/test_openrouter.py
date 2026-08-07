@@ -54,6 +54,7 @@ def test_openrouter_posts_expected_payload(monkeypatch):
     assert captured["body"]["model"] == "deepseek/deepseek-v4-flash-0731"
     assert captured["body"]["temperature"] == 0
     assert captured["body"]["response_format"] == {"type": "json_object"}
+    assert captured["body"]["reasoning"] == {"effort": "none"}
     assert captured["body"]["messages"][0] == {"role": "system", "content": "SYS PROMPT"}
     assert result.error is None
     assert result.parsed_response["group_key"] == "g1"

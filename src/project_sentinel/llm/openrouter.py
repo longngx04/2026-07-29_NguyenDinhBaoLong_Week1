@@ -74,7 +74,10 @@ class OpenRouterClient(LLMProvider):
                 {"role": "user", "content": json.dumps(packet_dict, ensure_ascii=False)}
             ],
             "temperature": 0,
-            "response_format": {"type": "json_object"}
+            "response_format": {"type": "json_object"},
+            # DeepSeek reasoning models otherwise spend tokens in `reasoning`
+            # and may return empty/garbage JSON in `content`.
+            "reasoning": {"effort": "none"},
         }
 
         body_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")

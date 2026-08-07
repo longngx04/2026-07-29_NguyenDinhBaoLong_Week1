@@ -6,12 +6,12 @@
   "llm_call_count": 21,
   "retry_count": 0,
   "invalid_output_count": 0,
-  "runtime_ms": 198.37,
+  "runtime_ms": 759333.54,
   "token_usage": {
-    "prompt": 3150,
-    "completion": 2100,
-    "total": 5250
+    "prompt": 35090,
+    "completion": 24273,
+    "total": 59363
   },
-  "model": "fake-llm",
+  "model": "deepseek/deepseek-v4-flash-0731",
   "prompt_sha256": "cdb25f76d67b3ae0733a9b1cd97299a6b410e80975cde70300444d8e70bdd6f5"
 }

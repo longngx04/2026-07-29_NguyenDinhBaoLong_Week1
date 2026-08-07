@@ -2,16 +2,16 @@
   "schema_version": "1.0",
   "input_finding_count": 23,
   "group_count": 21,
-  "output_record_count": 20,
-  "llm_call_count": 24,
-  "retry_count": 3,
-  "invalid_output_count": 1,
-  "runtime_ms": 1223002.81,
+  "output_record_count": 21,
+  "llm_call_count": 21,
+  "retry_count": 0,
+  "invalid_output_count": 0,
+  "runtime_ms": 759333.54,
   "token_usage": {
-    "prompt": 33069,
-    "completion": 61823,
-    "total": 94892
+    "prompt": 35090,
+    "completion": 24273,
+    "total": 59363
   },
   "model": "deepseek/deepseek-v4-flash-0731",
-  "prompt_sha256": "a6636ea057c141782809ee7db38da22bf696c4ead6a3d331b7dac823f67341d4"
+  "prompt_sha256": "cdb25f76d67b3ae0733a9b1cd97299a6b410e80975cde70300444d8e70bdd6f5"
 }
