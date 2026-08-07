@@ -17,9 +17,12 @@ docker compose --project-directory "$project_root" run --rm scanner \
 
 jq -e '
   type == "object"
-  and (.results | type == "array")
-  and (.errors | type == "array")
-  and all(.results[]?; (.path | startswith("benchmarks/targets/webgoat/") or .path | startswith("targets/webgoat/")))
+    and (.results | type == "array")
+    and (.errors | type == "array")
+    and all(.results[]?;
+      (.path | type == "string")
+      and (.path | (startswith("benchmarks/targets/webgoat/") or startswith("targets/webgoat/")))
+    )
 ' "$report_path" >/dev/null
 
 printf 'OpenGrep report: %s\n' "$report_path"
