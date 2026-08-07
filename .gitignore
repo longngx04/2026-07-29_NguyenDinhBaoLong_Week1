@@ -30,4 +30,9 @@ __pycache__/
 
 # Local raw scan output (regenerate with make scan). Normalized findings are committed.
 results/raw/
-results/analysis/
+# Week-3 analysis outputs: commit baseline JSONL + summary for mentor review;
+# ignore other generated artifacts under this directory.
+results/analysis/*
+!results/analysis/security-analysis.jsonl
+!results/analysis/run-summary.json
+

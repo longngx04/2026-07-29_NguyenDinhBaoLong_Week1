@@ -23,7 +23,7 @@ rules/opengrep/          # Rule SAST Java
 targets/webgoat/         # WebGoat v2025.3 (submodule)
 results/raw/             # OpenGrep JSON gốc (local, không commit)
 results/normalized/      # Finding đã chuẩn hóa (Week-2)
-results/analysis/        # Output JSONL & run-summary (Week-3, gitignored)
+results/analysis/        # Output JSONL & run-summary (Week-3 baseline committed)
 knowledge/               # OWASP Top 10, notes tool, ví dụ lỗ hổng
 week2/                   # normalize + search (Python)
 week3/                   # Security Analysis Agent (Config, Grouping, Evidence, Provenance Validation, Pipeline, CLI)
