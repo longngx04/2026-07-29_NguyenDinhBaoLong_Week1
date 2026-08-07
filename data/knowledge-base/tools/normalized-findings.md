@@ -5,7 +5,7 @@ tags: [schema, findings, agent, normalize]
 
 # Normalized findings schema
 
-Mỗi cảnh báo sau `week2.normalize` có các field chính:
+Mỗi cảnh báo sau `project_sentinel.ingestion.normalizer` có các field chính:
 
 - `tool` — ví dụ `opengrep`
 - `severity` — `high` / `medium` / `low` / `info`
@@ -14,4 +14,4 @@ Mỗi cảnh báo sau `week2.normalize` có các field chính:
 - `message` — mô tả đầy đủ từ tool
 - `rule_id`, `cwe`, `owasp`, `line`, `fingerprint`
 
-File tổng hợp: `results/normalized/findings.json` (`count` + mảng `findings`).
+File tổng hợp: `artifacts/normalized/findings.json` (`count` + mảng `findings`).

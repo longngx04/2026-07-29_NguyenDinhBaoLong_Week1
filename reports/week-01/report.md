@@ -11,10 +11,10 @@ Hệ thống dùng **OpenGrep `v1.26.0`** để quét mã nguồn Java của **O
 
 | Thành phần                                          | Vai trò                                              |
 | --------------------------------------------------- | ---------------------------------------------------- |
-| `targets/webgoat`                                   | Source WebGoat pin qua Git submodule ở tag `v2025.3` |
+| `benchmarks/targets/webgoat`                                   | Source WebGoat pin qua Git submodule ở tag `v2025.3` |
 | `docker-compose.yml`                                | Chạy container WebGoat runtime + image scanner       |
-| `scanner/`                                          | Image chứa OpenGrep, `curl`, `jq`                    |
-| `rules/opengrep/java-security.yml`                  | Bộ 3 rule bảo mật Java do project tự giữ             |
+| `infra/docker/scanner/`                                          | Image chứa OpenGrep, `curl`, `jq`                    |
+| `configs/opengrep/java-security.yml`                  | Bộ 3 rule bảo mật Java do project tự giữ             |
 | `make target-up` / `make scan` / `make target-down` | Lệnh vận hành local                                  |
 | `.github/workflows/security-scan.yml`               | CI chạy cùng lệnh scan và upload artifact            |
 
@@ -31,7 +31,7 @@ Developer / GitHub Actions
         OpenGrep
      (mã nguồn Java)
            |
-  results/raw/opengrep.json
+  artifacts/raw/opengrep.json
 
 Trình duyệt local --> container WebGoat --> 127.0.0.1:8080 / 127.0.0.1:9090
 ```
@@ -42,13 +42,13 @@ Cách hệ thống được tách:
 Ứng dụng cần demo/quét, bật bằng `make target-up`. Port bind chặt vào `127.0.0.1:8080` và `127.0.0.1:9090`, nên chỉ máy local mới vào được.
 - **Scanner image (`scanner`)**  
 Image Docker riêng, không dùng chung process với WebGoat. Khi scan, image mount:
-  - `targets/webgoat` — chỉ đọc
-  - `rules/opengrep` — chỉ đọc
-  - `results/` — nơi duy nhất trong project được ghi kết quả
+  - `benchmarks/targets/webgoat` — chỉ đọc
+  - `configs/opengrep` — chỉ đọc
+  - `artifacts/` — nơi duy nhất trong project được ghi kết quả
 - **Lệnh scan**  
 `make scan` gọi `scripts/scan-opengrep.sh`: tải/kiểm tra binary OpenGrep (checksum SHA256), build image scanner, chạy OpenGrep, rồi dùng `jq` kiểm tra JSON hợp lệ trước khi báo xong.
 - **CI**  
-Workflow GitHub Actions checkout submodule, chạy `make scan`, validate `results/raw/opengrep.json`, rồi upload artifact `week1-raw-scan-reports`.
+Workflow GitHub Actions checkout submodule, chạy `make scan`, validate `artifacts/raw/opengrep.json`, rồi upload artifact `raw-scan-reports`.
 
 ## Cách chạy
 
@@ -83,7 +83,7 @@ WebGoat còn rất nhiều endpoint theo từng bài học. Bảng trên chỉ l
 
 ## Bộ rule OpenGrep
 
-Rule nằm ở `rules/opengrep/java-security.yml`, cố ý hẹp để Week-1 dễ giải thích và tái chạy:
+Rule nằm ở `configs/opengrep/java-security.yml`, cố ý hẹp để Week-1 dễ giải thích và tái chạy:
 
 
 | Rule id                        | CWE     | Pattern chính                                      | Severity |
@@ -97,7 +97,7 @@ Mỗi rule gắn metadata CWE/OWASP và confidence `MEDIUM`. Đây là pattern m
 
 ## Kết quả quét
 
-Bằng chứng JSON gốc: `results/raw/opengrep.json`  
+Bằng chứng JSON gốc: `artifacts/raw/opengrep.json`  
 Lần chạy gần nhất bằng `make scan` trên WebGoat `v2025.3`:
 
 - OpenGrep `1.26.0`

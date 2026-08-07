@@ -2,8 +2,8 @@
 
 ## 1. Repository Baseline (Week 1–2)
 
-- **Week-1 Baseline:** Quét phân tích tĩnh (SAST) sử dụng OpenGrep trên ứng dụng thử nghiệm OWASP WebGoat v2025.3, xuất kết quả thô ra file `results/raw/opengrep.json`.
-- **Week-2 Baseline:** Thiết kế schema chuẩn hóa chung (`NormalizedFinding`), chuyển đổi 23 cảnh báo thô sang `results/normalized/findings.json`. Đồng thời xây dựng kho tri thức an ninh `knowledge/` (OWASP Top 10, ví dụ lỗ hổng) và công cụ tra cứu tri thức `week2.search`.
+- **Week-1 Baseline:** Quét phân tích tĩnh (SAST) sử dụng OpenGrep trên ứng dụng thử nghiệm OWASP WebGoat v2025.3, xuất kết quả thô ra file `artifacts/raw/opengrep.json`.
+- **Week-2 Baseline:** Thiết kế schema chuẩn hóa chung (`NormalizedFinding`), chuyển đổi 23 cảnh báo thô sang `artifacts/normalized/findings.json`. Đồng thời xây dựng kho tri thức an ninh `data/knowledge-base/` (OWASP Top 10, ví dụ lỗ hổng) và công cụ tra cứu tri thức `project_sentinel.retrieval.keyword_search`.
 
 ---
 
@@ -17,7 +17,7 @@ Em đã hoàn thành 5 mục tiêu:
 
 1. **Deduplication & Grouping:** Gom nhóm 23 cảnh báo thô thành 21 nhóm lỗ hổng độc lập dựa trên fingerprint và khoảng cách dòng code (`rule_id + file + line_distance <= 5`).
 2. **Deterministic Evidence Extraction:** Trích xuất chính xác cửa sổ mã nguồn (`radius = 4` dòng) quanh vị trí lỗ hổng với kiểm tra ranh giới an toàn (`project_root` và `target_root`).
-3. **Knowledge Retrieval & Provenance Hashing:** Tra cứu tài liệu liên quan từ `knowledge/` và tạo mã băm SHA256 cho System Prompt làm căn cứ kiểm tra nguồn gốc.
+3. **Knowledge Retrieval & Provenance Hashing:** Tra cứu tài liệu liên quan từ `data/knowledge-base/` và tạo mã băm SHA256 cho System Prompt làm căn cứ kiểm tra nguồn gốc.
 4. **Post-LLM Schema & Provenance Validation:** Đảm bảo LLM chỉ sử dụng đúng `source_finding_ids`, `locations`, `cwe`, `owasp`, và `knowledge_refs` thực tế từ input packet. Nếu phát hiện bịa đặt (hallucination), hệ thống thực hiện retry 1 lần kèm System Note phản hồi lỗi.
 5. **Atomic Writing & Run Summary:** Ghi kết quả phân tích theo chuẩn JSONL nguyên tử (`write_jsonl_atomic`) và tự động xuất báo cáo tổng kết `run-summary.json`.
 
@@ -28,53 +28,53 @@ Em đã hoàn thành 5 mục tiêu:
 ## 3. Kiến trúc & Các thành phần đã dựng
 
 ```text
-  results/normalized/findings.json (23 findings)
+  artifacts/normalized/findings.json (23 findings)
                         │
                         ▼
-           python3 -m week3.input_loader
+           python3 -m project_sentinel.ingestion.input_loader
                         │
                         ▼
-            week3.grouping (Deduplication)
+            project_sentinel.analysis.grouping (Deduplication)
              └─► Gom nhóm thành 21 groups
                         │
                         ▼
-           week3.packet_builder & evidence
+           project_sentinel.analysis.packet_builder & evidence
              ├─► Trích xuất source snippet (radius=4)
              └─► Tra cứu knowledge hits (top-k=3)
                         │
                         ▼
-            week3.prompt_builder (SHA256)
+            project_sentinel.analysis.prompt_builder (SHA256)
                         │
                         ▼
            LLM Provider (OpenRouter / FakeLLM)
                         │
                         ▼
-            week3.validators (Post-LLM)
+            project_sentinel.analysis.validators (Post-LLM)
              ├─► JSON Schema Validation
              └─► Provenance Anti-Hallucination Check
              (Fail -> Retry 1 lần với [System Note])
                         │
                         ▼
-  results/analysis/security-analysis.jsonl  &  run-summary.json
+  artifacts/analysis/security-analysis.jsonl  &  run-summary.json
 ```
 
 
 | Thành phần                       | Vai trò                                                                                            |
 | -------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `week3/config.py`                | Quản lý cấu hình `AppConfig`, nạp `.env` (tôn trọng env sẵn có) và CLI override                    |
-| `week3/models.py`                | Định nghĩa Dataclass cho `NormalizedFinding`, `FindingGroup`, `SecurityAnalysisRecord`             |
-| `week3/input_loader.py`          | Load và validate file cảnh báo chuẩn hóa (`results/normalized/findings.json`)                      |
-| `week3/evidence.py`              | Trích xuất snippet mã nguồn xác định với ranh giới an toàn `target_root`                           |
-| `week3/grouping.py`              | Thuật toán gom nhóm trùng lặp (fingerprint + rule_id/file/line-distance <= 5)                      |
-| `week3/retrieval.py`             | Adapter tra cứu tri thức bảo mật từ `knowledge/` dựa trên `week2.search`                           |
-| `week3/packet_builder.py`        | Đóng gói `AnalysisPacket` tổng hợp findings, source code, knowledge hits và limitations            |
-| `week3/prompt_builder.py`        | Xây dựng prompt payload xác định, tính toán băm SHA256 cho System Prompt                           |
-| `week3/llm/base.py`              | Interface Protocol `LLMProvider` định nghĩa phương thức `analyze()`                                |
-| `week3/llm/fake.py`              | Mock Provider `FakeLLM` phục vụ CI/unit testing offline không phụ thuộc network                    |
-| `week3/llm/openrouter.py`        | Direct HTTPS client gọi OpenRouter Chat Completions API (`deepseek/deepseek-v4-flash-0731`)        |
-| `week3/validators.py`            | Kiểm tra JSON Schema (`validate_record_schema`) & kiểm tra provenance (`validate_provenance`)      |
-| `week3/pipeline.py`              | Coordinator điều phối toàn bộ quy trình từ input -> grouping -> LLM -> validation -> output        |
-| `week3/cli.py` & `week3/main.py` | Entry point CLI hỗ trợ subcommands `analyze` và `validate` với exit codes chuẩn                    |
+| `src/project_sentinel/config.py`                | Quản lý cấu hình `AppConfig`, nạp `.env` (tôn trọng env sẵn có) và CLI override                    |
+| `src/project_sentinel/models.py`                | Định nghĩa Dataclass cho `NormalizedFinding`, `FindingGroup`, `SecurityAnalysisRecord`             |
+| `src/project_sentinel/ingestion/input_loader.py`          | Load và validate file cảnh báo chuẩn hóa (`artifacts/normalized/findings.json`)                      |
+| `src/project_sentinel/analysis/evidence.py`              | Trích xuất snippet mã nguồn xác định với ranh giới an toàn `target_root`                           |
+| `src/project_sentinel/analysis/grouping.py`              | Thuật toán gom nhóm trùng lặp (fingerprint + rule_id/file/line-distance <= 5)                      |
+| `src/project_sentinel/retrieval/knowledge_retriever.py`             | Adapter tra cứu tri thức bảo mật từ `data/knowledge-base/` dựa trên `project_sentinel.retrieval.keyword_search`                           |
+| `src/project_sentinel/analysis/packet_builder.py`        | Đóng gói `AnalysisPacket` tổng hợp findings, source code, knowledge hits và limitations            |
+| `src/project_sentinel/analysis/prompt_builder.py`        | Xây dựng prompt payload xác định, tính toán băm SHA256 cho System Prompt                           |
+| `src/project_sentinel/llm/base.py`              | Interface Protocol `LLMProvider` định nghĩa phương thức `analyze()`                                |
+| `src/project_sentinel/llm/fake.py`              | Mock Provider `FakeLLM` phục vụ CI/unit testing offline không phụ thuộc network                    |
+| `src/project_sentinel/llm/openrouter.py`        | Direct HTTPS client gọi OpenRouter Chat Completions API (`deepseek/deepseek-v4-flash-0731`)        |
+| `src/project_sentinel/analysis/validators.py`            | Kiểm tra JSON Schema (`validate_record_schema`) & kiểm tra provenance (`validate_provenance`)      |
+| `src/project_sentinel/analysis/pipeline.py`              | Coordinator điều phối toàn bộ quy trình từ input -> grouping -> LLM -> validation -> output        |
+| `src/project_sentinel/cli.py` | Entry point CLI hỗ trợ subcommands `analyze` và `validate` với exit codes chuẩn                    |
 | `Makefile`                       | Cung cấp các lệnh `make agent-test`, `make analyze-mock`, `make validate-analysis`, `make analyze` |
 
 
@@ -84,7 +84,7 @@ Em đã hoàn thành 5 mục tiêu:
 
 ## 4. System Prompt Design & Anti-Hallucination Rules
 
-System Prompt được lưu tại [prompts/security_analysis_system.md](prompts/security_analysis_system.md).
+System Prompt được lưu tại [configs/prompts/security-analysis-system.md](configs/prompts/security-analysis-system.md).
 
 ### Các quy tắc chống ảo giác (Anti-Hallucination Rules) cốt lõi:
 
@@ -106,7 +106,7 @@ System Prompt được lưu tại [prompts/security_analysis_system.md](prompts/
 
 ## 5. Schema Record Phân Tích Bảo Mật
 
-Mỗi bản ghi phân tích trong `results/analysis/security-analysis.jsonl` tuân thủ nghiêm ngặt JSON Schema tại `schemas/security-analysis-record.schema.json`:
+Mỗi bản ghi phân tích trong `artifacts/analysis/security-analysis.jsonl` tuân thủ nghiêm ngặt JSON Schema tại `schemas/security-analysis-record.schema.json`:
 
 ```json
 {
@@ -125,7 +125,7 @@ Mỗi bản ghi phân tích trong `results/analysis/security-analysis.jsonl` tu�
   "confidence_rationale": "A security sink was detected, but reachability is unknown based on supplied evidence.",
   "locations": [
     {
-      "file": "targets/webgoat/src/main/java/org/dummy/insecure/framework/VulnerableTaskHolder.java",
+      "file": "benchmarks/targets/webgoat/src/main/java/org/dummy/insecure/framework/VulnerableTaskHolder.java",
       "line": 69
     }
   ],
@@ -154,15 +154,15 @@ Mỗi bản ghi phân tích trong `results/analysis/security-analysis.jsonl` tu�
   ],
   "knowledge_refs": [
     {
-      "path": "knowledge/examples/command-injection-runtime-exec.md",
+      "path": "data/knowledge-base/vulnerabilities/command-injection-runtime-exec.md",
       "score": 27.18
     },
     {
-      "path": "knowledge/examples/sql-injection-concat.md",
+      "path": "data/knowledge-base/vulnerabilities/sql-injection-concat.md",
       "score": 14.35
     },
     {
-      "path": "knowledge/owasp-top10.md",
+      "path": "data/knowledge-base/owasp/owasp-top10.md",
       "score": 12.88
     }
   ],
@@ -178,7 +178,7 @@ Mỗi bản ghi phân tích trong `results/analysis/security-analysis.jsonl` tu�
 
 ## 6. Manual Review Sample Table (Đánh giá chất lượng mẫu)
 
-Đánh giá chất lượng phân tích trên các mẫu đại diện từ 21 groups (`results/normalized/findings.json`):
+Đánh giá chất lượng phân tích trên các mẫu đại diện từ 21 groups (`artifacts/normalized/findings.json`):
 
 
 | Nhóm lỗ hổng                 | Location (File & Line)                      | Finding IDs                  | Checklist Verification                                                                          | Đánh giá chất lượng                                                                                             |
@@ -195,7 +195,7 @@ Mỗi bản ghi phân tích trong `results/analysis/security-analysis.jsonl` tu�
 
 ## 7. Test Suite & Validation Matrix
 
-Bộ kiểm thử bao gồm **63 unit & acceptance tests** chạy offline 100% không phụ thuộc network (`pytest tests/week3 --collect-only -q`):
+Bộ kiểm thử bao gồm **63 unit & acceptance tests** chạy offline 100% không phụ thuộc network (`pytest tests --collect-only -q`):
 
 
 | Hạng mục kiểm thử                  | Số lượng Test Cases | File thực thi                                              | Mô tả                                                           |
@@ -210,7 +210,7 @@ Bộ kiểm thử bao gồm **63 unit & acceptance tests** chạy offline 100% k
 | **Schema & Provenance Validation** | 5 tests             | `test_validators.py`                                       | Schema compliance, rejection of invented CWE/OWASP/IDs          |
 | **Pipeline End-to-End**            | 6 tests             | `test_pipeline.py`                                         | Acceptance tests, empty input, duplicate grouping, canary/retry |
 | **CLI & Exit Codes**               | 7 tests             | `test_cli.py`                                              | Exit codes 0, 2, 3, 4 và target_root wiring                     |
-| **Tổng cộng**                      | **63 tests**        | `pytest tests/week3`                                       | **Pass 100%**                                                   |
+| **Tổng cộng**                      | **63 tests**        | `pytest tests`                                       | **Pass 100%**                                                   |
 
 
 ---
@@ -223,10 +223,10 @@ Bộ kiểm thử bao gồm **63 unit & acceptance tests** chạy offline 100% k
 
 ### 1. Group Count Verification:
 
-Chạy lệnh xác thực trực tiếp trên dữ liệu committed `results/normalized/findings.json`:
+Chạy lệnh xác thực trực tiếp trên dữ liệu committed `artifacts/normalized/findings.json`:
 
 ```bash
-python3 -c "from week3.input_loader import load_findings; from week3.grouping import group_findings; f=load_findings('results/normalized/findings.json'); print('group_count:', len(group_findings(f.findings)))"
+python3 -c "from project_sentinel.ingestion.input_loader import load_findings; from project_sentinel.analysis.grouping import group_findings; f=load_findings('artifacts/normalized/findings.json'); print('group_count:', len(group_findings(f.findings)))"
 ```
 
 - **Kết quả:** **21 groups** (Giảm từ 23 cảnh báo thô xuống 21 nhóm độc lập do 2 cặp findings thuộc `SqlInjectionLesson3.java` và `SqlInjectionLesson4.java` có khoảng cách dòng $\le 5$).
@@ -235,7 +235,7 @@ python3 -c "from week3.input_loader import load_findings; from week3.grouping im
 
 ### 2. Metrics Summary:
 
-> **Lưu ý:** `make analyze-mock` chỉ chạy fixture 2 findings (demo nhanh). Metrics 23→21 dưới đây lấy từ **full offline FakeLLM** trên `results/normalized/findings.json`.
+> **Lưu ý:** `make analyze-mock` chỉ chạy fixture 2 findings (demo nhanh). Metrics 23→21 dưới đây lấy từ **full offline FakeLLM** trên `artifacts/normalized/findings.json`.
 
 
 | Metric                         | Offline Full Fake (`FakeLLM`)                                      | Fixture Mock (`make analyze-mock`)                                 | Real OpenRouter Run                                      |
@@ -316,7 +316,7 @@ make analyze
 
 
 
-### Mã exit code CLI (`week3/cli.py`):
+### Mã exit code CLI (`src/project_sentinel/cli.py`):
 
 - `0`: Thực thi thành công.
 - `2`: Lỗi cấu hình / File đầu vào không tồn tại hoặc sai định dạng JSON.
@@ -334,8 +334,8 @@ Week 3 đã hoàn thành mục tiêu chính: xây dựng **Security Analysis Age
 
 Các kết quả then chốt:
 
-1. **Input → Output có hợp đồng rõ:** 23 findings chuẩn hóa từ Week 2 được gom thành **21 groups**, xuất `results/analysis/security-analysis.jsonl` và `run-summary.json` theo schema cố định.
-2. **Evidence-grounded:** Mỗi group được bổ sung source snippet (read-only, có kiểm soát path) và top-k knowledge hits tái sử dụng `week2.search`.
+1. **Input → Output có hợp đồng rõ:** 23 findings chuẩn hóa từ Week 2 được gom thành **21 groups**, xuất `artifacts/analysis/security-analysis.jsonl` và `run-summary.json` theo schema cố định.
+2. **Evidence-grounded:** Mỗi group được bổ sung source snippet (read-only, có kiểm soát path) và top-k knowledge hits tái sử dụng `project_sentinel.retrieval.keyword_search`.
 3. **Chống hallucination có kiểm chứng bằng code:** System Prompt đặt soft rules; `validators` enforce hard rules trên `source_finding_ids`, locations, CWE/OWASP và knowledge refs. Suite **63 tests** chạy offline bằng `FakeLLM`.
 4. **Triage có ý nghĩa hơn scanner raw:** Phân tách `scanner_severities` và `severity` phân tích; confidence phản ánh thiếu data-flow thay vì mặc định coi mọi sink là confirmed high.
 
