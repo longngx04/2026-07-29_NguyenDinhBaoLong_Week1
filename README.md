@@ -109,5 +109,4 @@ make validate-analysis                                        # Validation kết
 
 Chi tiết: [docs/report-week3.md](docs/report-week3.md)
 
-> **Lưu ý:** Chế độ OpenRouter thật chỉ phục vụ smoke test thủ công ở môi trường local thông qua file `.env` (tuyệt đối không commit file `.env` và không dán API key trực tiếp trên dòng lệnh).
 
